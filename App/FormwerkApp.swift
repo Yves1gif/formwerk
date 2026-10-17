@@ -5,13 +5,13 @@ struct FormwerkApp: App {
     init() {
         Theme.registerFonts()
         if SelfTest.requested { MainActor.assumeIsolated { SelfTest.run() } }
+        #if os(iOS)
+        if ScreenshotMode.current != nil { MainActor.assumeIsolated { ScreenshotMode.presentOverLaunch() } }
+        #endif
     }
 
     var body: some Scene {
-        DocumentGroup(newDocument: { FormwerkDocument() }) { file in
-            EditorView(document: file.document)
-        }
-        .commands { FormwerkCommands() }
+        documents
 
         #if os(iOS)
         // The start screen: big title on Werk Blue, "New Design" and the templates.
@@ -35,6 +35,13 @@ struct FormwerkApp: App {
         #if os(macOS)
         Settings { SettingsView() }
         #endif
+    }
+
+    private var documents: some Scene {
+        DocumentGroup(newDocument: { FormwerkDocument() }) { file in
+            EditorView(document: file.document)
+        }
+        .commands { FormwerkCommands() }
     }
 }
 

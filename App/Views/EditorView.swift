@@ -78,7 +78,9 @@ struct EditorView: View {
         .onAppear {
             model.undoManager = undoManager
             updateColors()
-            if !welcomeSeen { showWelcome = true }
+            if let shot = ScreenshotMode.current {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { shot.prepare(model, showPrint: $showPrint) }
+            } else if !welcomeSeen { showWelcome = true }
         }
         .onChange(of: undoManager) { _, u in model.undoManager = u }
         .onChange(of: colorScheme) { _, _ in updateColors() }
