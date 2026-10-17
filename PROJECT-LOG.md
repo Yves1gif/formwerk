@@ -59,3 +59,18 @@ See BAUPLAN.md §13: open source yes/no, tip jar timing, minimum iPad, final nam
 - **For the App Store:** `PrivacyInfo.xcprivacy` (UserDefaults CA92.1, file timestamps C617.1, no tracking), a launch screen colour, `deploy/deploy.sh` (same as StockStart).
 - **README, NOTICE** (OCCT LGPL + relinking instructions, Space Grotesk OFL), first git commit.
 - The iPad UI test hung on the home screen while 3 other projects were building on this Mac. The app itself was checked by launching it with `simctl` (the launch screen renders correctly).
+
+## 2026-10-17: App Store Connect, TestFlight, submitted for review (user: "do everything in Chrome … privacy and whatever Apple wants")
+- **App record:** "Formwerk: 3D CAD & Print" (Apple ID 6824043658), iOS + macOS, bundle `com.yvesf.formwerk`, SKU `formwerk`, primary language English (USA).
+- **App information:**
+  - subtitle "Design parts for 3D printing"
+  - category Graphics and Design, secondary Productivity
+  - no third-party content
+  - age rating 4+ (every questionnaire answer "No / None")
+- **Privacy:** "Data Not Collected" (published). Privacy policy (EN + DE) in `PRIVACY.md` on GitHub.
+- **Price:** free in all 175 countries; available everywhere.
+- **Version 1.0 store page:** promotional text, description (EN), keywords, support URL = GitHub issues, marketing URL = GitHub repo, copyright, notes for App Review, review contact (taken from StockStart's entry). "Sign-in required" unticked. **Release set to manual**, so nothing goes live without the user.
+- **Screenshots:** 5 × iPad 13" (2064×2752) in `deploy/appstore/`: bracket with a face selected, sketch mode, fillet preview, print sheet, keychain "LEA". They come from the new screenshot mode (`-formwerkShot model|sketch|fillet|print|keychain`). The app sets the scene up by itself; we only launch it with `simctl` and take the picture. This was needed because the user declined simulator control and UI tests would have meant control too. SwiftUI scenes can't be switched conditionally, so screenshot mode presents the editor full screen over the start screen.
+- **Version 0.1.0 → 1.0:** the store version and the build's marketing version must match.
+- **TestFlight:** internal group "Team" with the user, automatic distribution, builds 0.1.0 and 1.0 ready.
+- **Submitted for review** on 17 Oct 2026 at 21:56 (status "Waiting for Review"). The macOS version is still in preparation; it needs its own Mac build upload.
