@@ -1,0 +1,167 @@
+name: Formwerk
+options:
+  bundleIdPrefix: com.yvesf
+  deploymentTarget:
+    iOS: "18.0"
+    macOS: "14.0"
+  createIntermediateGroups: true
+
+# This XcodeGen install has no SettingPresets, so the usual Debug/Release
+# defaults are spelled out here (same as StockStart).
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    DEVELOPMENT_TEAM: HC67GN5D2X
+    CODE_SIGN_STYLE: Automatic
+    ALWAYS_SEARCH_USER_PATHS: "NO"
+    CLANG_ENABLE_MODULES: "YES"
+    CLANG_ENABLE_OBJC_ARC: "YES"
+    CLANG_CXX_LANGUAGE_STANDARD: "c++17"
+    CLANG_CXX_LIBRARY: "libc++"
+    ENABLE_PREVIEWS: "YES"
+    SWIFT_EMIT_LOC_STRINGS: "YES"
+    LOCALIZATION_PREFERS_STRING_CATALOGS: "YES"
+    ENABLE_USER_SCRIPT_SANDBOXING: "YES"
+  configs:
+    Debug:
+      SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG
+      SWIFT_OPTIMIZATION_LEVEL: "-Onone"
+      GCC_OPTIMIZATION_LEVEL: "0"
+      GCC_PREPROCESSOR_DEFINITIONS: ["DEBUG=1", "$(inherited)"]
+      ENABLE_TESTABILITY: "YES"
+      ONLY_ACTIVE_ARCH: "YES"
+      DEBUG_INFORMATION_FORMAT: dwarf
+      MTL_ENABLE_DEBUG_INFO: INCLUDE_SOURCE
+    Release:
+      SWIFT_COMPILATION_MODE: wholemodule
+      SWIFT_OPTIMIZATION_LEVEL: "-O"
+      GCC_OPTIMIZATION_LEVEL: "s"
+      DEBUG_INFORMATION_FORMAT: dwarf-with-dsym
+      VALIDATE_PRODUCT: "YES"
+      MTL_ENABLE_DEBUG_INFO: "NO"
+
+targets:
+  Formwerk:
+    type: application
+    supportedDestinations: [iOS, macOS]
+    sources:
+      - path: App
+      - path: Sources
+      - path: Resources
+        excludes: ["Info.plist", "*.entitlements"]
+    dependencies:
+      - framework: Vendor/OCCT/OCCT.xcframework
+        embed: false
+      - sdk: CoreText.framework
+    info:
+      path: Resources/Info.plist
+      properties:
+        CFBundleDisplayName: Formwerk
+        LSApplicationCategoryType: public.app-category.graphics-design
+        ITSAppUsesNonExemptEncryption: false
+        LSSupportsOpeningDocumentsInPlace: true
+        UISupportsDocumentBrowser: true
+        UIRequiresFullScreen: false
+        UILaunchScreen:
+          UIColorName: LaunchBackground
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: true
+        CFBundleDocumentTypes:
+          - CFBundleTypeName: Formwerk Design
+            CFBundleTypeRole: Editor
+            LSHandlerRank: Owner
+            LSTypeIsPackage: true
+            LSItemContentTypes: [com.yvesf.formwerk.design]
+        UTExportedTypeDeclarations:
+          - UTTypeIdentifier: com.yvesf.formwerk.design
+            UTTypeDescription: Formwerk Design
+            UTTypeConformsTo: [com.apple.package, public.composite-content]
+            UTTypeTagSpecification:
+              public.filename-extension: [formwerk]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.yvesf.formwerk
+        PRODUCT_NAME: Formwerk
+        GENERATE_INFOPLIST_FILE: "YES"
+        TARGETED_DEVICE_FAMILY: "2"
+        SUPPORTED_PLATFORMS: "iphoneos iphonesimulator macosx"
+        SDKROOT: auto
+        SUPPORTS_MACCATALYST: "NO"
+        SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: "NO"
+        SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD: "NO"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        SWIFT_OBJC_BRIDGING_HEADER: App/Formwerk-Bridging-Header.h
+        HEADER_SEARCH_PATHS: ["$(SRCROOT)/Sources/Kernel"]
+        SYSTEM_HEADER_SEARCH_PATHS: ["$(SRCROOT)/Vendor/OCCT/include"]
+        OTHER_LDFLAGS: ["-lc++"]
+        CODE_SIGN_ENTITLEMENTS[sdk=macosx*]: Resources/Formwerk.entitlements
+        ENABLE_HARDENED_RUNTIME[sdk=macosx*]: "YES"
+        ARCHS[sdk=macosx*]: arm64
+        LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]: ["$(inherited)", "@executable_path/../Frameworks"]
+        LD_RUNPATH_SEARCH_PATHS[sdk=iphone*]: ["$(inherited)", "@executable_path/Frameworks"]
+        INFOPLIST_KEY_NSHumanReadableCopyright: "Free and open source (MPL-2.0)"
+
+  FormwerkTests:
+    type: bundle.unit-test
+    platform: macOS
+    deploymentTarget: "14.0"
+    sources:
+      - path: Tests/FormwerkTests
+      - path: Sources
+        excludes: ["Render/**"]
+      - path: App/Editor/Templates.swift
+    dependencies:
+      - framework: Vendor/OCCT/OCCT.xcframework
+        embed: false
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.yvesf.formwerk.tests
+        PRODUCT_NAME: FormwerkTests
+        ARCHS: arm64
+        GENERATE_INFOPLIST_FILE: "YES"
+        SWIFT_OBJC_BRIDGING_HEADER: App/Formwerk-Bridging-Header.h
+        HEADER_SEARCH_PATHS: ["$(SRCROOT)/Sources/Kernel"]
+        SYSTEM_HEADER_SEARCH_PATHS: ["$(SRCROOT)/Vendor/OCCT/include"]
+        OTHER_LDFLAGS: ["-lc++"]
+
+  FormwerkUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "18.0"
+    sources:
+      - path: Tests/FormwerkUITests
+    dependencies:
+      - target: Formwerk
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.yvesf.formwerk.uitests
+        PRODUCT_NAME: FormwerkUITests
+        SUPPORTED_PLATFORMS: "iphoneos iphonesimulator"
+        SDKROOT: iphoneos
+        GENERATE_INFOPLIST_FILE: "YES"
+        TARGETED_DEVICE_FAMILY: "2"
+        TEST_TARGET_NAME: Formwerk
+
+schemes:
+  Formwerk-iPad:
+    build:
+      targets:
+        Formwerk: all
+        FormwerkUITests: [test]
+    test:
+      targets: [FormwerkUITests]
+  Formwerk:
+    build:
+      targets:
+        Formwerk: all
+        FormwerkTests: [test]
+    test:
+      targets: [FormwerkTests]

@@ -1,0 +1,18 @@
+# Xcode
+*.xcodeproj/
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+# OCCT build products (rebuilt by tools/build-occt.sh)
+Vendor/OCCT/src/
+Vendor/OCCT/build-*/
+Vendor/OCCT/install-*/
+Vendor/OCCT/include/
+Vendor/OCCT/OCCT.xcframework/
+Vendor/OCCT/*.log
+# Python
+tools/.venv/
+__pycache__/
+.DS_Store
+tools/l10n/parts/
