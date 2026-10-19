@@ -3,7 +3,7 @@ import SwiftUI
 /// App Store screenshots without touching the screen: launch with `-formwerkShot <scene>`
 /// and the app opens a template straight into the editor and sets the scene up itself.
 enum ScreenshotMode: String {
-    case model, sketch, fillet, print, keychain
+    case model, sketch, fillet, print, keychain, tutorial
 
     static var current: ScreenshotMode? {
         UserDefaults.standard.string(forKey: "formwerkShot").flatMap(ScreenshotMode.init)
@@ -26,10 +26,38 @@ enum ScreenshotMode: String {
     }
     #endif
 
+    #if os(macOS)
+    /// Opens a new window on the template (screenshot mode only) and closes the Open panel.
+    @MainActor static func openOnMac() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            for w in NSApp.windows where w is NSOpenPanel { w.close() }
+            NSDocumentController.shared.newDocument(nil)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                for w in NSApp.windows where w is NSOpenPanel { w.close() }
+                if let w = NSApp.windows.first(where: { $0.isVisible && !($0 is NSPanel) }) {
+                    w.setFrame(NSRect(x: 0, y: 0, width: 1440, height: 900), display: true)
+                    w.center()
+                    // With -formwerkShotOut <path> the app saves a picture of its own window and quits.
+                    if let out = UserDefaults.standard.string(forKey: "formwerkShotOut") {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 6) {
+                            if let img = CGWindowListCreateImage(.null, .optionIncludingWindow, CGWindowID(w.windowNumber), [.boundsIgnoreFraming, .bestResolution]) {
+                                let rep = NSBitmapImageRep(cgImage: img)
+                                try? rep.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: out))
+                            }
+                            NSApp.terminate(nil)
+                        }
+                    }
+                }
+            }
+        }
+    }
+    #endif
+
     @MainActor var design: Design {
         switch self {
         case .keychain: Templates.keychain(text: "LEA")
         case .print: Templates.plantPot()
+        case .tutorial: Design()
         default: Templates.wallBracket()
         }
     }
@@ -75,7 +103,7 @@ enum ScreenshotMode: String {
         case .print:
             model.runPrintCheck()
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { showPrint.wrappedValue = true }
-        case .keychain:
+        case .keychain, .tutorial:
             break
         }
     }

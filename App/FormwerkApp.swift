@@ -7,6 +7,8 @@ struct FormwerkApp: App {
         if SelfTest.requested { MainActor.assumeIsolated { SelfTest.run() } }
         #if os(iOS)
         if ScreenshotMode.current != nil { MainActor.assumeIsolated { ScreenshotMode.presentOverLaunch() } }
+        #else
+        if ScreenshotMode.current != nil { MainActor.assumeIsolated { ScreenshotMode.openOnMac() } }
         #endif
     }
 
@@ -38,7 +40,7 @@ struct FormwerkApp: App {
     }
 
     private var documents: some Scene {
-        DocumentGroup(newDocument: { FormwerkDocument() }) { file in
+        DocumentGroup(newDocument: { FormwerkDocument(design: MainActor.assumeIsolated { ScreenshotMode.current?.design } ?? Design()) }) { file in
             EditorView(document: file.document)
         }
         .commands { FormwerkCommands() }
@@ -46,7 +48,7 @@ struct FormwerkApp: App {
 }
 
 enum TemplateKind: String, CaseIterable, Identifiable {
-    case keychain, box, bracket, pot
+    case keychain, box, bracket, pot, stand, hook
     var id: String { rawValue }
 
     var title: LocalizedStringKey {
@@ -55,6 +57,8 @@ enum TemplateKind: String, CaseIterable, Identifiable {
         case .box: "Open box"
         case .bracket: "Wall bracket"
         case .pot: "Plant pot"
+        case .stand: "Phone stand"
+        case .hook: "Wall hook"
         }
     }
 
@@ -64,6 +68,8 @@ enum TemplateKind: String, CaseIterable, Identifiable {
         case .box: Templates.box()
         case .bracket: Templates.wallBracket()
         case .pot: Templates.plantPot()
+        case .stand: Templates.phoneStand()
+        case .hook: Templates.wallHook()
         }
     }
 }

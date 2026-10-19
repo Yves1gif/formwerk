@@ -61,6 +61,10 @@ extension EditorModel {
                                mesh: b.shape.mesh(linear: quality.linear, angular: quality.angular),
                                color: Palette.bodies[styles[i].colorIndex % Palette.bodies.count])
                 }
+                if format == .usdz {
+                    try USDZExport.write(exportBodies, to: url)
+                    return .success(url)
+                }
                 let data: Data = switch format {
                 case .stl: MeshExport.stl(exportBodies)
                 case .obj: MeshExport.obj(exportBodies)

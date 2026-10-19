@@ -14,6 +14,12 @@ struct EditorView: View {
     @State private var showImport = false
     @State private var showWelcome = false
     @State private var showBodies = false
+    @State private var tutorialStep: TutorialStep?
+    @State private var startTutorialAfterWelcome = false
+    @AppStorage("tutorialDone") private var tutorialDone = false
+    #if os(iOS)
+    @State private var arFile: ExportedFile?
+    #endif
 
     init(document: FormwerkDocument) {
         self.document = document
@@ -58,6 +64,7 @@ struct EditorView: View {
                 if let toast = model.toast {
                     ToastView(toast: toast).transition(.move(edge: .bottom).combined(with: .opacity))
                 }
+                TutorialCoach(model: model, step: $tutorialStep, printShown: showPrint)
                 ContextBar(model: model)
                 if model.sketch == nil {
                     TimelineView(model: model)
@@ -78,9 +85,15 @@ struct EditorView: View {
         .onAppear {
             model.undoManager = undoManager
             updateColors()
-            if let shot = ScreenshotMode.current {
+            if ScreenshotMode.current == .tutorial {
+                tutorialStep = .sketch
+            } else if let shot = ScreenshotMode.current {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { shot.prepare(model, showPrint: $showPrint) }
-            } else if !welcomeSeen { showWelcome = true }
+            } else if !welcomeSeen {
+                showWelcome = true
+            } else if !tutorialDone && model.design.features.isEmpty {
+                tutorialStep = .sketch
+            }
         }
         .onChange(of: undoManager) { _, u in model.undoManager = u }
         .onChange(of: colorScheme) { _, _ in updateColors() }
@@ -89,9 +102,22 @@ struct EditorView: View {
         .sheet(isPresented: $showPrint, onDismiss: { model.endPrintCheck() }) {
             PrintSheet(model: model)
         }
-        .sheet(isPresented: $showWelcome, onDismiss: { welcomeSeen = true }) {
-            WelcomeView { showWelcome = false }
+        .sheet(isPresented: $showWelcome, onDismiss: {
+            welcomeSeen = true
+            if startTutorialAfterWelcome {
+                startTutorialAfterWelcome = false
+                withAnimation(.snappy) { tutorialStep = .sketch }
+            }
+        }) {
+            WelcomeView { startTutorial in
+                startTutorialAfterWelcome = startTutorial
+                if !startTutorial { tutorialDone = true }
+                showWelcome = false
+            }
         }
+        #if os(iOS)
+        .fullScreenCover(item: $arFile) { f in ARQuickLookView(url: f.url).ignoresSafeArea() }
+        #endif
         .fileImporter(isPresented: $showImport, allowedContentTypes: UTType.stepFiles) { result in
             if case .success(let url) = result { model.importSTEP(url) }
         }
@@ -122,7 +148,14 @@ struct EditorView: View {
                 Picker("Units", selection: Binding(get: { model.design.unit }, set: { model.setUnit($0) })) {
                     ForEach(LengthUnit.allCases) { u in Text(u.symbol).tag(u) }
                 }
+                Button("Tutorial", systemImage: "graduationcap") { withAnimation(.snappy) { tutorialStep = .sketch } }
                 Button("Help", systemImage: "questionmark.circle") { showWelcome = true }
+                #if os(iOS)
+                Divider()
+                Button("View in AR", systemImage: "arkit") {
+                    model.makeUSDZ { url in if let url { arFile = ExportedFile(url: url, format: .usdz) } }
+                }
+                #endif
             } label: {
                 Label("View", systemImage: "eye")
             }

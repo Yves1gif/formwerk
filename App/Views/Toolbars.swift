@@ -198,6 +198,7 @@ struct ContextBar: View {
                 out.append(Action(id: "pp", title: "Push/Pull", icon: ToolKind.pushPull.icon) { model.start(.pushPull) })
                 out.append(Action(id: "hole", title: "Hole", icon: ToolKind.hole.icon) { model.start(.hole) })
                 out.append(Action(id: "txt", title: "Text", icon: ToolKind.text.icon) { model.start(.text) })
+                out.append(Action(id: "flat", title: "Lay flat", icon: "arrow.down.to.line") { model.layFlat() })
             }
             out.append(Action(id: "fil2", title: "Round edges", icon: ToolKind.fillet.icon) { model.start(.fillet) })
             out.append(Action(id: "shell", title: "Hollow", icon: ToolKind.shell.icon) { model.start(.shell) })

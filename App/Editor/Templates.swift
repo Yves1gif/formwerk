@@ -97,4 +97,37 @@ enum Templates {
         d.features.append(Feature(name: "Hole 1", operation: .hole(HoleFeature(face: inner, positions: [Vec2(0, 0)], diameter: 8, depth: 0))))
         return d
     }
+
+    /// A phone stand: side profile with a backrest and a front lip, 70 mm wide.
+    static func phoneStand() -> Design {
+        var d = Design()
+        var sk = Sketch()
+        let outline = [Vec2(0, 0), Vec2(75, 0), Vec2(75, 4), Vec2(60, 4), Vec2(60, 14), Vec2(55, 14), Vec2(55, 4),
+                       Vec2(26, 4), Vec2(14, 62), Vec2(8, 62), Vec2(20, 4), Vec2(0, 4)]
+        let pts = outline.map { sk.addPoint($0) }
+        for i in pts.indices { sk.addLine(pts[i], pts[(i + 1) % pts.count]) }
+        let sketch = Feature(name: "Sketch 1", operation: .sketch(SketchFeature(plane: .origin(.xz, offset: 0), sketch: sk)))
+        d.features.append(sketch)
+        d.features.append(Feature(name: "Extrude 1", operation: .extrude(ExtrudeFeature(
+            sketch: sketch.id, regionSeeds: [Vec2(40, 2)], distance: 70, symmetric: true))))
+        return d
+    }
+
+    /// A J-shaped wall hook with a countersunk screw hole.
+    static func wallHook() -> Design {
+        var d = Design()
+        var sk = Sketch()
+        let outline = [Vec2(0, 0), Vec2(30, 0), Vec2(30, 14), Vec2(26, 14), Vec2(26, 4), Vec2(4, 4), Vec2(4, 50), Vec2(0, 50)]
+        let pts = outline.map { sk.addPoint($0) }
+        for i in pts.indices { sk.addLine(pts[i], pts[(i + 1) % pts.count]) }
+        let sketch = Feature(name: "Sketch 1", operation: .sketch(SketchFeature(plane: .origin(.xz, offset: 0), sketch: sk)))
+        d.features.append(sketch)
+        let ext = Feature(name: "Extrude 1", operation: .extrude(ExtrudeFeature(
+            sketch: sketch.id, regionSeeds: [Vec2(2, 25)], distance: 16, symmetric: true)))
+        d.features.append(ext)
+        let front = FaceRef(body: ext.id.uuidString, kind: 0, centroid: Vec3(4, 0, 27), normal: Vec3(1, 0, 0), area: 46 * 16)
+        d.features.append(Feature(name: "Hole 1", operation: .hole(HoleFeature(
+            face: front, positions: [Vec2(0, 40)], kind: .countersink, diameter: 4.5, depth: 0, headDiameter: 8.8, headDepth: 4.4))))
+        return d
+    }
 }

@@ -9,10 +9,10 @@ struct ExportBody {
 }
 
 enum ExportFormat: String, CaseIterable, Identifiable {
-    case threeMF = "3MF", stl = "STL", step = "STEP", obj = "OBJ"
+    case threeMF = "3MF", stl = "STL", step = "STEP", obj = "OBJ", usdz = "USDZ"
     var id: String { rawValue }
     var fileExtension: String {
-        switch self { case .threeMF: "3mf"; case .stl: "stl"; case .step: "step"; case .obj: "obj" }
+        switch self { case .threeMF: "3mf"; case .stl: "stl"; case .step: "step"; case .obj: "obj"; case .usdz: "usdz" }
     }
 }
 
@@ -153,19 +153,32 @@ enum MeshExport {
 
 /// A minimal ZIP writer (stored, no compression): enough for 3MF.
 enum Zip {
-    static func store(_ files: [(String, Data)]) -> Data {
+    /// `align`: start every file's data at a multiple of this many bytes (USDZ needs 64).
+    static func store(_ files: [(String, Data)], align: Int = 1) -> Data {
         var out = Data()
         var central = Data()
         for (name, data) in files {
             let nameData = Data(name.utf8)
             let crc = CRC32.checksum(data)
             let offset = UInt32(out.count)
+            // Padding goes into an "extra field" so the data lands on the alignment boundary.
+            var pad = 0
+            if align > 1 {
+                let start = out.count + 30 + nameData.count
+                pad = (align - start % align) % align
+                if pad > 0 && pad < 4 { pad += align }
+            }
             // local file header
             le(&out, UInt32(0x04034b50)); le(&out, UInt16(20)); le(&out, UInt16(0)); le(&out, UInt16(0))
             le(&out, UInt16(0)); le(&out, UInt16(0x21))  // time, date (1980-01-01)
             le(&out, crc); le(&out, UInt32(data.count)); le(&out, UInt32(data.count))
-            le(&out, UInt16(nameData.count)); le(&out, UInt16(0))
-            out.append(nameData); out.append(data)
+            le(&out, UInt16(nameData.count)); le(&out, UInt16(pad))
+            out.append(nameData)
+            if pad > 0 {
+                le(&out, UInt16(0x1986)); le(&out, UInt16(pad - 4))
+                out.append(Data(count: pad - 4))
+            }
+            out.append(data)
             // central directory entry
             le(&central, UInt32(0x02014b50)); le(&central, UInt16(20)); le(&central, UInt16(20)); le(&central, UInt16(0))
             le(&central, UInt16(0)); le(&central, UInt16(0)); le(&central, UInt16(0x21))

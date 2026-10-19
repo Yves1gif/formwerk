@@ -74,3 +74,20 @@ See BAUPLAN.md §13: open source yes/no, tip jar timing, minimum iPad, final nam
 - **Version 0.1.0 → 1.0:** the store version and the build's marketing version must match.
 - **TestFlight:** internal group "Team" with the user, automatic distribution, builds 0.1.0 and 1.0 ready.
 - **Submitted for review** on 17 Oct 2026 at 21:56 (status "Waiting for Review"). The macOS version is still in preparation; it needs its own Mac build upload.
+
+## 2026-10-19: Update (user: "add features, make it more useful, tutorial at opening that people can skip"; "I will click send to Apple myself"; brother tests first)
+- **Interactive tutorial (7 steps):** Sketch → rectangle → Done → Extrude → height → fillet → Print. It follows what you actually do, moves on by itself and skips steps you've already done.
+  - "Skip tutorial" works on every step.
+  - The welcome sheet offers "Show me how (1 min)" or "Skip".
+  - It can be restarted under View → Tutorial.
+  - Reason: a coach card at the bottom instead of a slideshow, because people learn by doing and can always leave.
+- **Lay flat:** select a flat face → the part rotates so that face lies on the bed, centred, at z = 0. It's saved as an ordinary Move step, so it stays editable and undoable.
+- **Auto-orient** (print sheet): tries the 6 main directions plus the 12 biggest flat faces as "down" and keeps the one with the least overhang (half of the part's height is added to the score, so lower parts win ties).
+- **AR view (iPad)** + **USDZ export:**
+  - ModelIO can't write USDZ, and its USDC has no units (USD then assumes cm) and is Y-up.
+  - So the USDA is written by hand (`metersPerUnit = 0.001`, Z-up, `subdivisionScheme = none`) and packed as a 64-byte-aligned zip.
+  - `usdchecker --arkit`: Success.
+- **Templates:** phone stand and wall hook (6 in total). The self-test builds all 6 valid.
+- **Mac screenshots:** the app photographs its own window (`-formwerkShotOut`) because Claude has no screen recording permission. This uses an unsandboxed debug copy, since the sandbox container isn't readable from outside. 5 images at 2880×1800 are in `deploy/appstore/mac-*`.
+- 33 new texts in all 15 languages (306 strings total). 16 tests green.
+- **Not published:** the user submits to Apple themselves. Builds go to TestFlight only.

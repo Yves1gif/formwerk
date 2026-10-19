@@ -46,6 +46,16 @@ struct PrintSheet: View {
                     }
                 }
 
+                Section("Orientation") {
+                    Button {
+                        model.autoOrient()
+                    } label: {
+                        Label("Auto-orient for least overhang", systemImage: "rotate.3d")
+                    }
+                    Text("Tip: to rest a part on a certain face, select that face and use Lay flat.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+
                 if let r = model.printCheck {
                     Section("Estimate") {
                         HStack(spacing: 10) {
@@ -112,6 +122,7 @@ struct PrintSheet: View {
         case .stl: "Works with every slicer."
         case .step: "Exact geometry for other CAD apps."
         case .obj: "For 3D graphics apps."
+        case .usdz: "For AR and Apple's 3D apps, in real size."
         }
     }
 
@@ -178,7 +189,8 @@ struct ShareSheet: UIViewControllerRepresentable {
 
 /// First-launch help: three steps and the few gestures you need.
 struct WelcomeView: View {
-    let done: () -> Void
+    /// true = start the guided tutorial
+    let done: (Bool) -> Void
 
     var body: some View {
         ScrollView {
@@ -203,11 +215,14 @@ struct WelcomeView: View {
                     tip("keyboard", "Shortcuts: K sketch, L line, R rectangle, C circle, D dimension, Esc to stop.")
                     #endif
                 }
-                HStack {
+                HStack(spacing: 12) {
                     Spacer()
-                    Button("Start designing", action: done)
+                    Button("Skip") { done(false) }
+                        .buttonStyle(PanelButtonStyle())
+                        .frame(width: 140)
+                    Button("Show me how (1 min)") { done(true) }
                         .buttonStyle(PanelButtonStyle(prominent: true))
-                        .frame(width: 220)
+                        .frame(width: 240)
                 }
             }
             .padding(40)
