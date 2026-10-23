@@ -3,7 +3,7 @@ import SwiftUI
 /// App Store screenshots without touching the screen: launch with `-formwerkShot <scene>`
 /// and the app opens a template straight into the editor and sets the scene up itself.
 enum ScreenshotMode: String {
-    case model, sketch, fillet, print, keychain, tutorial
+    case model, sketch, fillet, print, keychain, tutorial, unfold
 
     static var current: ScreenshotMode? {
         UserDefaults.standard.string(forKey: "formwerkShot").flatMap(ScreenshotMode.init)
@@ -57,7 +57,7 @@ enum ScreenshotMode: String {
         switch self {
         case .keychain: Templates.keychain(text: "LEA")
         case .print: Templates.plantPot()
-        case .tutorial: Design()
+        case .tutorial, .unfold: Design()
         default: Templates.wallBracket()
         }
     }
@@ -68,8 +68,9 @@ enum ScreenshotMode: String {
         var cam = Camera()
         cam.yaw = -.pi / 3.2
         cam.pitch = 0.5
-        cam.fit(model.output.bounds)
-        cam.distance *= self == .keychain ? 1.0 : 1.35
+        cam.fit(model.output.bounds, aspect: Double(r.viewSize.width / max(r.viewSize.height, 1)))
+        let narrow = r.viewSize.width < r.viewSize.height
+        cam.distance *= narrow ? (self == .keychain ? 0.6 : 0.7) : (self == .keychain ? 1.0 : 1.35)
         r.camera = cam
         switch self {
         case .model:
@@ -103,7 +104,7 @@ enum ScreenshotMode: String {
         case .print:
             model.runPrintCheck()
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { showPrint.wrappedValue = true }
-        case .keychain, .tutorial:
+        case .keychain, .tutorial, .unfold:
             break
         }
     }

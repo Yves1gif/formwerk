@@ -66,6 +66,10 @@ targets:
         UIRequiresFullScreen: false
         UILaunchScreen:
           UIColorName: LaunchBackground
+        UISupportedInterfaceOrientations~iphone:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
         UISupportedInterfaceOrientations~ipad:
           - UIInterfaceOrientationPortrait
           - UIInterfaceOrientationPortraitUpsideDown
@@ -90,7 +94,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.yvesf.formwerk
         PRODUCT_NAME: Formwerk
         GENERATE_INFOPLIST_FILE: "YES"
-        TARGETED_DEVICE_FAMILY: "2"
+        TARGETED_DEVICE_FAMILY: "1,2"
         SUPPORTED_PLATFORMS: "iphoneos iphonesimulator macosx"
         SDKROOT: auto
         SUPPORTS_MACCATALYST: "NO"

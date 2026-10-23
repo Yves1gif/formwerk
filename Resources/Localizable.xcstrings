@@ -9965,6 +9965,100 @@
         }
       }
     },
+    "Formwerk is made for big screens. Open your iPhone Duo to design with the full editor.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "صُمّم Formwerk للشاشات الكبيرة. افتح جهاز iPhone Duo لتصمّم باستخدام المحرّر الكامل."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Formwerk ist für grosse Bildschirme gemacht. Öffne dein iPhone Duo, um mit dem ganzen Editor zu konstruieren."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Formwerk está hecho para pantallas grandes. Abre tu iPhone Duo para diseñar con el editor completo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Formwerk est conçu pour les grands écrans. Ouvrez votre iPhone Duo pour concevoir avec l’éditeur complet."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Formwerk बड़ी स्क्रीन के लिए बना है। पूरे एडिटर से डिज़ाइन करने के लिए अपना iPhone Duo खोलें।"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Formwerk dibuat untuk layar besar. Buka iPhone Duo kamu untuk mendesain dengan editor lengkap."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Formwerk è fatto per schermi grandi. Apri il tuo iPhone Duo per progettare con l’editor completo."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Formwerkは大きな画面向けに作られています。iPhone Duoを開くと、すべての機能を使って設計できます。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Formwerk는 큰 화면을 위해 만들어졌습니다. iPhone Duo를 펼쳐 전체 편집기로 디자인하세요."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Formwerk is gemaakt voor grote schermen. Open je iPhone Duo om te ontwerpen met de volledige editor."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Formwerk jest stworzony dla dużych ekranów. Rozłóż iPhone’a Duo, aby projektować w pełnym edytorze."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O Formwerk foi feito para telas grandes. Abra seu iPhone Duo para projetar com o editor completo."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Formwerk büyük ekranlar için yapıldı. Tam düzenleyiciyle tasarlamak için iPhone Duo’nu aç."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Formwerk 专为大屏幕设计。展开你的 iPhone Duo，即可使用完整编辑器进行设计。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Formwerk 專為大螢幕設計。展開你的 iPhone Duo，即可使用完整編輯器進行設計。"
+          }
+        }
+      }
+    },
     "Front": {
       "localizations": {
         "ar": {
@@ -14665,6 +14759,100 @@
         }
       }
     },
+    "On other iPhones, use Formwerk on your iPad or Mac.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "على أجهزة iPhone الأخرى، استخدم Formwerk على iPad أو Mac."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Auf anderen iPhones nutze Formwerk auf deinem iPad oder Mac."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En otros iPhone, usa Formwerk en tu iPad o Mac."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur les autres iPhone, utilisez Formwerk sur votre iPad ou Mac."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "दूसरे iPhone पर, Formwerk को अपने iPad या Mac पर इस्तेमाल करें।"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Di iPhone lain, gunakan Formwerk di iPad atau Mac kamu."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sugli altri iPhone, usa Formwerk su iPad o Mac."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ほかのiPhoneでは、iPadまたはMacでFormwerkをお使いください。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "다른 iPhone에서는 iPad나 Mac에서 Formwerk를 사용하세요."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gebruik Formwerk op andere iPhones op je iPad of Mac."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Na innych iPhone’ach używaj Formwerk na iPadzie lub Macu."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Em outros iPhones, use o Formwerk no iPad ou Mac."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diğer iPhone’larda Formwerk’ü iPad’inde veya Mac’inde kullan."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在其他 iPhone 上，请在 iPad 或 Mac 上使用 Formwerk。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在其他 iPhone 上，請在 iPad 或 Mac 上使用 Formwerk。"
+          }
+        }
+      }
+    },
     "One finger turns the view, two fingers move and zoom.": {
       "localizations": {
         "ar": {
@@ -14755,6 +14943,100 @@
           "stringUnit": {
             "state": "translated",
             "value": "單指旋轉檢視，雙指平移和縮放。"
+          }
+        }
+      }
+    },
+    "Open anyway": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "افتح على أي حال"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trotzdem öffnen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abrir de todos modos"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvrir quand même"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "फिर भी खोलें"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tetap buka"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apri comunque"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このまま開く"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "그래도 열기"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toch openen"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Otwórz mimo to"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abrir mesmo assim"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yine de aç"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "仍然打开"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "仍要開啟"
           }
         }
       }
@@ -21339,96 +21621,96 @@
         }
       }
     },
-    "Tap Sketch on the left. You will draw on the ground.": {
+    "Tap Sketch to start. You will draw on the ground.": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "اضغط على «رسم» على اليسار. سترسم على الأرضية."
+            "value": "اضغط على رسم للبدء. سترسم على الأرض."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tippe links auf Skizze. Du zeichnest auf dem Boden."
+            "value": "Tippe auf Skizze, um zu beginnen. Du zeichnest auf den Boden."
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Toca Boceto a la izquierda. Dibujarás sobre el suelo."
+            "value": "Toca Boceto para empezar. Dibujarás sobre el suelo."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Touchez Esquisse à gauche. Vous dessinerez sur le sol."
+            "value": "Touchez Esquisse pour commencer. Vous dessinez sur le sol."
           }
         },
         "hi": {
           "stringUnit": {
             "state": "translated",
-            "value": "बाईं ओर स्केच पर टैप करें। आप ज़मीन पर ड्रॉ करेंगे।"
+            "value": "शुरू करने के लिए स्केच पर टैप करें। आप ज़मीन पर ड्रॉ करेंगे।"
           }
         },
         "id": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ketuk Sketsa di kiri. Anda akan menggambar di atas tanah."
+            "value": "Ketuk Sketsa untuk mulai. Kamu menggambar di bidang dasar."
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tocca Schizzo a sinistra. Disegnerai sul piano."
+            "value": "Tocca Schizzo per iniziare. Disegnerai sul piano."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "左の「スケッチ」をタップします。地面の上に描きます。"
+            "value": "スケッチをタップして始めます。地面に描きます。"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "왼쪽의 스케치를 탭하세요. 바닥 위에 그리게 됩니다."
+            "value": "스케치를 탭하여 시작하세요. 바닥에 그리게 됩니다."
           }
         },
         "nl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tik links op Schets. Je tekent op de grond."
+            "value": "Tik op Schets om te beginnen. Je tekent op de grond."
           }
         },
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Dotknij Szkic po lewej. Będziesz rysować na podłożu."
+            "value": "Stuknij Szkic, aby zacząć. Rysujesz na podłożu."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Toque em Esboço à esquerda. Você vai desenhar no chão."
+            "value": "Toque em Esboço para começar. Você desenha no chão."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Soldaki Eskiz'e dokunun. Zemine çizeceksiniz."
+            "value": "Başlamak için Eskiz'e dokun. Zemine çizeceksin."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "轻点左侧的“草图”。你将在地面上绘制。"
+            "value": "轻点“草图”开始。你将在地面上绘制。"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "輕點左側的「草圖」。你會在地面上繪製。"
+            "value": "點一下「草圖」開始。你會在地面上繪製。"
           }
         }
       }
@@ -27069,6 +27351,100 @@
           "stringUnit": {
             "state": "translated",
             "value": "取消固定"
+          }
+        }
+      }
+    },
+    "Unfold your iPhone": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "افتح جهاز iPhone"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Klappe dein iPhone auf"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Despliega tu iPhone"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dépliez votre iPhone"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "अपना iPhone खोलें"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buka lipatan iPhone kamu"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apri il tuo iPhone"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhoneを開いてください"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone을 펼치세요"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vouw je iPhone open"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rozłóż iPhone’a"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Desdobre seu iPhone"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone’unu aç"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "展开你的 iPhone"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "展開你的 iPhone"
           }
         }
       }

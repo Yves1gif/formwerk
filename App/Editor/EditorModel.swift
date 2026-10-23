@@ -246,7 +246,7 @@ final class EditorModel: ObservableObject {
         var cam = renderer.camera
         var box = output.bounds
         if box.isEmpty { box = Box3(min: Vec3(-40, -40, 0), max: Vec3(40, 40, 20)) }
-        cam.fit(box)
+        cam.fit(box, aspect: Double(renderer.viewSize.width / max(renderer.viewSize.height, 1)))
         if animated { renderer.animate(to: cam) } else { renderer.camera = cam }
     }
 
@@ -269,7 +269,7 @@ final class EditorModel: ObservableObject {
         }
         var box = output.bounds
         if box.isEmpty { box = Box3(min: Vec3(-40, -40, 0), max: Vec3(40, 40, 20)) }
-        cam.fit(box)
+        cam.fit(box, aspect: Double(renderer.viewSize.width / max(renderer.viewSize.height, 1)))
         renderer.animate(to: cam)
     }
 

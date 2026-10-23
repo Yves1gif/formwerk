@@ -153,6 +153,8 @@ Cloud accounts, team collaboration, CAM/CNC toolpaths, rendering studio, sheet m
 
 **iPad only, not iPhone:** set `TARGETED_DEVICE_FAMILY: "2"`. CAD on a phone screen would hurt the reviews. iPhone may come later as a viewer.
 
+**Changed 2026-10-23: iPhone Duo.** The build now includes iPhone (`"1,2"`), but it's made for the **iPhone Duo's inner screen**, which has regular size classes like an iPad and gets the full iPad layout. Normal iPhones and a folded Duo show an "Unfold your iPhone" screen. A small "Open anyway" button leads to the phone layout. See PROJECT-LOG.
+
 **Native Mac rather than Catalyst:** real menu bar, right-click, mouse-wheel zoom and multiple windows feel right on a Mac. Roughly 85% of the code is shared, and only the input layer and window chrome differ.
 
 ### 4.2 Modules (local Swift packages)
@@ -475,6 +477,16 @@ Every phase ends with something you can try on the iPad. Each phase gets an entr
 | Too much scope for one person + Claude | high | high | v1 list is fixed. Everything else is v1.1+. Section 3 "Never" is final |
 
 ---
+
+## 12b. Next version (1.1) backlog
+- **AI assistant, bring your own account:**
+  - The user signs in with the AI service they choose (Claude, ChatGPT, Gemini, …) using their own key or account.
+  - They describe a part ("wall hook for a 20 mm rail, 3 mm screw holes") and the AI builds it as normal, editable timeline steps (sketch, extrude, fillet…), never as a dead mesh.
+  - **Why it fits the "no paid APIs" rule:** the user pays their own provider; Formwerk has no server and no cost. The key stays in the Keychain.
+  - **To decide:**
+    - which providers ship first
+    - the feature format the AI writes: probably JSON for our `Feature` types, checked by ModelBuilder before it's applied
+    - the App Store privacy label (data goes to a third party the user chose)
 
 ## 13. Open decisions (for you)
 

@@ -9,6 +9,7 @@ struct EditorView: View {
     @StateObject private var model: EditorModel
     @Environment(\.undoManager) private var undoManager
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.horizontalSizeClass) private var sizeClass
     @AppStorage("welcomeSeen") private var welcomeSeen = false
     @State private var showPrint = false
     @State private var showImport = false
@@ -16,6 +17,7 @@ struct EditorView: View {
     @State private var showBodies = false
     @State private var tutorialStep: TutorialStep?
     @State private var startTutorialAfterWelcome = false
+    @State private var openAnywayOnSmallPhone = false
     @AppStorage("tutorialDone") private var tutorialDone = false
     #if os(iOS)
     @State private var arFile: ExportedFile?
@@ -40,38 +42,16 @@ struct EditorView: View {
                     .ignoresSafeArea()
             }
 
-            VStack(spacing: 10) {
-                if model.sketch != nil {
-                    SketchTopBar(model: model)
-                }
-                HStack(alignment: .top, spacing: 12) {
-                    if model.sketch != nil {
-                        SketchToolbar(model: model)
-                    } else {
-                        ToolRail(model: model, showPrint: $showPrint, showImport: $showImport)
-                    }
-                    Spacer(minLength: 0)
-                    if model.tool != nil || model.sketch != nil || !model.selection.isEmpty || model.section != nil {
-                        Inspector(model: model)
-                            .frame(width: 280)
-                    }
-                }
-                Spacer(minLength: 0)
-                if model.design.features.isEmpty && model.sketch == nil && model.tool == nil {
-                    EmptyDesignCard(model: model, showImport: $showImport)
-                    Spacer(minLength: 0)
-                }
-                if let toast = model.toast {
-                    ToastView(toast: toast).transition(.move(edge: .bottom).combined(with: .opacity))
-                }
-                TutorialCoach(model: model, step: $tutorialStep, printShown: showPrint)
-                ContextBar(model: model)
-                if model.sketch == nil {
-                    TimelineView(model: model)
-                }
+            if compact {
+                compactLayout
+            } else {
+                regularLayout
             }
-            .padding(12)
-            .animation(.snappy(duration: 0.2), value: model.toast)
+
+            if phoneTooSmall {
+                UnfoldView { withAnimation(.snappy) { openAnywayOnSmallPhone = true } }
+                    .ignoresSafeArea()
+            }
 
             if model.isBuilding {
                 VStack {
@@ -124,6 +104,101 @@ struct EditorView: View {
         #if os(iOS)
         .toolbarRole(.editor)
         #endif
+    }
+
+
+    /// Narrow screens (iPhone, a folded iPhone Duo, iPad Slide Over): tools at the bottom,
+    /// settings in a panel above them. Wide screens keep the rail on the left and the inspector on the right.
+    private var compact: Bool {
+        #if os(iOS)
+        return sizeClass == .compact
+        #else
+        return false
+        #endif
+    }
+
+    /// Made for the iPhone Duo's inner screen (regular width, like an iPad). A normal iPhone or a folded Duo
+    /// gets a "please unfold" screen; the phone layout behind it stays reachable with "Open anyway".
+    private var phoneTooSmall: Bool {
+        #if os(iOS)
+        return UIDevice.current.userInterfaceIdiom == .phone && sizeClass == .compact
+            && !openAnywayOnSmallPhone && (ScreenshotMode.current == nil || ScreenshotMode.current == .unfold)
+        #else
+        return false
+        #endif
+    }
+
+    private var showsInspector: Bool {
+        model.tool != nil || model.sketch != nil || !model.selection.isEmpty || model.section != nil
+    }
+
+    private var regularLayout: some View {
+            VStack(spacing: 10) {
+                if model.sketch != nil {
+                    SketchTopBar(model: model)
+                }
+                HStack(alignment: .top, spacing: 12) {
+                    if model.sketch != nil {
+                        SketchToolbar(model: model)
+                    } else {
+                        ToolRail(model: model, showPrint: $showPrint, showImport: $showImport)
+                    }
+                    Spacer(minLength: 0)
+                    if model.tool != nil || model.sketch != nil || !model.selection.isEmpty || model.section != nil {
+                        Inspector(model: model)
+                            .frame(width: 280)
+                    }
+                }
+                Spacer(minLength: 0)
+                if model.design.features.isEmpty && model.sketch == nil && model.tool == nil {
+                    EmptyDesignCard(model: model, showImport: $showImport)
+                    Spacer(minLength: 0)
+                }
+                if let toast = model.toast {
+                    ToastView(toast: toast).transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+                TutorialCoach(model: model, step: $tutorialStep, printShown: showPrint)
+                ContextBar(model: model)
+                if model.sketch == nil {
+                    TimelineView(model: model)
+                }
+            }
+        .padding(12)
+        .animation(.snappy(duration: 0.2), value: model.toast)
+    }
+
+    private var compactLayout: some View {
+        VStack(spacing: 8) {
+            if model.sketch != nil {
+                SketchTopBar(model: model)
+            }
+            Spacer(minLength: 0)
+            if model.design.features.isEmpty && model.sketch == nil && model.tool == nil {
+                EmptyDesignCard(model: model, showImport: $showImport)
+                Spacer(minLength: 0)
+            }
+            if let toast = model.toast {
+                ToastView(toast: toast).transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+            TutorialCoach(model: model, step: $tutorialStep, printShown: showPrint)
+            if showsInspector {
+                ScrollView { Inspector(model: model) }
+                    .frame(maxHeight: 260)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            ContextBar(model: model)
+            if model.sketch == nil && model.tool == nil {
+                TimelineView(model: model)
+            }
+            if model.sketch != nil {
+                SketchToolbar(model: model, horizontal: true)
+            } else if model.tool == nil {
+                ToolRail(model: model, showPrint: $showPrint, showImport: $showImport, horizontal: true)
+            }
+        }
+        .padding(.horizontal, 10)
+        .padding(.bottom, 6)
+        .animation(.snappy(duration: 0.2), value: model.toast)
     }
 
     @ToolbarContentBuilder
@@ -242,22 +317,34 @@ struct SketchTopBar: View {
 
     var body: some View {
         if let s = model.sketch {
-            HStack(spacing: 12) {
-                Image(systemName: "pencil.and.outline").foregroundStyle(Theme.blue)
-                Text(s.isNew ? "New Sketch" : "Edit Sketch").font(Theme.title(17, weight: .semibold))
-                Text("\(s.regions.count) closed areas")
-                    .font(.footnote.weight(.semibold))
-                    .padding(.horizontal, 10).padding(.vertical, 5)
-                    .background(Theme.blue.opacity(0.12), in: Capsule())
-                    .foregroundStyle(Theme.blue)
-                Button("Cancel") { model.cancelSketch() }
-                    .buttonStyle(PillButtonStyle())
-                Button("Done") { model.finishSketch() }
-                    .buttonStyle(PillButtonStyle(prominent: true))
-                    .keyboardShortcut(.return, modifiers: .command)
+            // On narrow screens the title and the area count give way to the buttons.
+            ViewThatFits(in: .horizontal) {
+                bar(s, full: true)
+                bar(s, full: false)
             }
-            .padding(.leading, 18).padding(.trailing, 6).padding(.vertical, 6)
-            .glassPanel(radius: 26)
         }
+    }
+
+    private func bar(_ s: SketchSession, full: Bool) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: "pencil.and.outline").foregroundStyle(Theme.blue)
+            if full {
+                Text(s.isNew ? "New Sketch" : "Edit Sketch").font(Theme.title(17, weight: .semibold))
+            }
+            Text("\(s.regions.count) closed areas")
+                .font(.footnote.weight(.semibold))
+                .padding(.horizontal, 10).padding(.vertical, 5)
+                .background(Theme.blue.opacity(0.12), in: Capsule())
+                .foregroundStyle(Theme.blue)
+                .lineLimit(1)
+            Button("Cancel") { model.cancelSketch() }
+                .buttonStyle(PillButtonStyle())
+            Button("Done") { model.finishSketch() }
+                .buttonStyle(PillButtonStyle(prominent: true))
+                .keyboardShortcut(.return, modifiers: .command)
+        }
+        .fixedSize()
+        .padding(.leading, 18).padding(.trailing, 6).padding(.vertical, 6)
+        .glassPanel(radius: 26)
     }
 }

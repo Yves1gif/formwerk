@@ -111,10 +111,12 @@ struct Camera: Equatable {
     }
 
     /// Frames a bounding box.
-    mutating func fit(_ box: Box3) {
+    /// `aspect` = width / height of the view; narrow (portrait phone) views need to back off further.
+    mutating func fit(_ box: Box3, aspect: Double = 1.5) {
         guard !box.isEmpty else { return }
         target = box.center
-        distance = max(box.diagonal, 10) / (2 * tan(fovY / 2)) * 1.25
+        let fitHeight = max(box.diagonal, 10) / (2 * tan(fovY / 2))
+        distance = fitHeight / min(max(aspect, 0.2), 1) * 1.25
     }
 
     /// Looks straight at a plane (for sketching).

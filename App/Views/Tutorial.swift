@@ -20,7 +20,7 @@ enum TutorialStep: Int, CaseIterable {
 
     var text: LocalizedStringKey {
         switch self {
-        case .sketch: "Tap Sketch on the left. You will draw on the ground."
+        case .sketch: "Tap Sketch to start. You will draw on the ground."
         case .rectangle: "Pick Rectangle, then tap two opposite corners on the grid."
         case .finishSketch: "Tap a side to type its exact length if you like. Then tap Done at the top."
         case .extrude: "The area is selected. Tap Extrude in the bar at the bottom."

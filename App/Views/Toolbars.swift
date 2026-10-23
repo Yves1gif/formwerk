@@ -6,12 +6,15 @@ struct ToolRail: View {
     @ObservedObject var model: EditorModel
     @Binding var showPrint: Bool
     @Binding var showImport: Bool
+    /// iPhone (narrow screens): a row at the bottom instead of a column on the left.
+    var horizontal = false
 
     var body: some View {
-        VStack(spacing: 4) {
+        let layout = horizontal ? AnyLayout(HStackLayout(spacing: 4)) : AnyLayout(VStackLayout(spacing: 4))
+        let rail = layout {
             RailButton(title: "Sketch", icon: "pencil.and.outline", active: false) { model.startSketch() }
                 .keyboardShortcut("k", modifiers: [])
-            Divider().frame(width: 30)
+            Divider().frame(width: horizontal ? nil : 30, height: horizontal ? 30 : nil)
             RailMenu(title: "Shapes", icon: "cube") {
                 toolButton(.box)
                 toolButton(.cylinder)
@@ -42,14 +45,19 @@ struct ToolRail: View {
                 Button(model.section == nil ? "Section View" : "End Section View", systemImage: "square.split.diagonal") { model.toggleSection() }
                 Toggle(isOn: $model.showAllSketches) { Label("Show All Sketches", systemImage: "pencil.and.outline") }
             }
-            Divider().frame(width: 30)
+            Divider().frame(width: horizontal ? nil : 30, height: horizontal ? 30 : nil)
             RailButton(title: "Print", icon: "printer", active: false) {
                 model.runPrintCheck()
                 showPrint = true
             }
         }
-        .padding(8)
-        .glassPanel(radius: 18)
+        if horizontal {
+            ScrollView(.horizontal, showsIndicators: false) { rail.padding(6) }
+                .fixedSize(horizontal: false, vertical: true)
+                .glassPanel(radius: 18)
+        } else {
+            rail.padding(8).glassPanel(radius: 18)
+        }
     }
 
     private func toolButton(_ k: ToolKind) -> some View {
@@ -106,11 +114,12 @@ struct RailMenu<Content: View>: View {
 /// Drawing tools while a sketch is open.
 struct SketchToolbar: View {
     @ObservedObject var model: EditorModel
+    var horizontal = false
 
     var body: some View {
         if let s = model.sketch {
-            VStack(alignment: .leading, spacing: 8) {
-                VStack(spacing: 4) {
+            let layout = horizontal ? AnyLayout(HStackLayout(spacing: 4)) : AnyLayout(VStackLayout(spacing: 4))
+            let tools = layout {
                     ForEach(SketchTool.allCases) { t in
                         let button = RailButton(title: t.title, icon: t.icon, active: s.tool == t) {
                             if s.tool == t { model.cancelSketchAction() } else { model.setSketchTool(t) }
@@ -124,9 +133,13 @@ struct SketchToolbar: View {
                         .frame(width: 58)
                         .labelsHidden()
                     }
-                }
-                .padding(8)
-                .glassPanel(radius: 18)
+            }
+            if horizontal {
+                ScrollView(.horizontal, showsIndicators: false) { tools.padding(6) }
+                    .fixedSize(horizontal: false, vertical: true)
+                    .glassPanel(radius: 18)
+            } else {
+                tools.padding(8).glassPanel(radius: 18)
             }
         }
     }
@@ -139,20 +152,22 @@ struct ContextBar: View {
     var body: some View {
         let actions = model.sketch != nil ? sketchActions : modelActions
         if !actions.isEmpty {
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 6) {
-                    ForEach(actions) { a in
-                        Button(action: a.run) {
-                            Label(a.title, systemImage: a.icon)
-                        }
-                        .buttonStyle(PillButtonStyle(prominent: a.prominent, destructive: a.id == "del"))
+            let row = HStack(spacing: 6) {
+                ForEach(actions) { a in
+                    Button(action: a.run) {
+                        Label(a.title, systemImage: a.icon)
                     }
+                    .buttonStyle(PillButtonStyle(prominent: a.prominent, destructive: a.id == "del"))
                 }
-                .padding(6)
             }
-            .fixedSize(horizontal: true, vertical: false)
-            .frame(maxWidth: 820)
-            .glassPanel(radius: 28)
+            .padding(6)
+            // Hug the buttons when they fit; scroll sideways on narrow screens (iPhone).
+            ViewThatFits(in: .horizontal) {
+                row.fixedSize().glassPanel(radius: 28)
+                ScrollView(.horizontal, showsIndicators: false) { row }
+                    .frame(maxWidth: 820)
+                    .glassPanel(radius: 28)
+            }
         }
     }
 

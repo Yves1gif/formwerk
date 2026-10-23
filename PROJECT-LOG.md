@@ -91,3 +91,18 @@ See BAUPLAN.md §13: open source yes/no, tip jar timing, minimum iPad, final nam
 - **Mac screenshots:** the app photographs its own window (`-formwerkShotOut`) because Claude has no screen recording permission. This uses an unsandboxed debug copy, since the sandbox container isn't readable from outside. 5 images at 2880×1800 are in `deploy/appstore/mac-*`.
 - 33 new texts in all 15 languages (306 strings total). 16 tests green.
 - **Not published:** the user submits to Apple themselves. Builds go to TestFlight only.
+
+## 2026-10-23: iPhone Duo (user: "make it run on the iPhone Duo"; "specifically for the iPhone Duo, not normal iPhones, they're too small"; "a store page for iPhone Duo")
+- **Decision:** iPhone is now in the build (`TARGETED_DEVICE_FAMILY "1,2"`), but Formwerk is made for the **iPhone Duo's inner screen** (7.6", 1878×2670).
+  - With the iOS 27 SDK, that screen reports **regular** width and height, like an iPad, so it gets the full iPad layout (tool rail, inspector, timeline). No separate Duo layout is needed.
+- **Narrow iPhone screens** (every normal iPhone, or a Duo while folded) show "Unfold your iPhone" (`UnfoldView`). When you unfold, it disappears by itself because the size class changes.
+  - Why not block normal iPhones completely: the App Store can't restrict an app to one iPhone model (there's no device capability for "foldable").
+  - Also, an iPhone app that does nothing on a normal iPhone risks rejection (guideline 2.1, app completeness).
+  - So a small "Open anyway" button leads to the compact phone layout built earlier (tools at the bottom). It stays usable, it just isn't the main experience.
+  - iPad Slide Over (compact on iPad) is untouched and still gets the compact layout.
+- **Blocker:**
+  - This Mac has **Xcode 26.6**. Apps built with an SDK older than iOS 27 run **letterboxed in iPhone proportions** on the Duo's inner screen. They then stay compact and would show the unfold screen even when unfolded.
+  - So: no iPhone build goes to TestFlight or the App Store until Xcode 27.1 is installed. That Xcode also brings the iPhone Duo simulator, needed for real Duo screenshots.
+- **Store page for the Duo:** texts and a featuring nomination draft are in `deploy/appstore/iphone-duo.md`. Duo screenshots follow once the Duo simulator exists (Xcode 27.1).
+- 4 new strings in all 15 languages (310 total). Checked en/de/ar on the iPhone 17 Pro and iPad 13" simulators. New screenshot mode `-formwerkShot unfold`.
+- **Next version backlog:** AI assistant with the user's own AI account (BAUPLAN §12b).
