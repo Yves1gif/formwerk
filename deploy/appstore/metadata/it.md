@@ -15,15 +15,15 @@ Progetta pezzi da stampare
 ```
 
 ## Promotional text
-<!-- 150/170 characters -->
+<!-- 154/170 characters -->
 ```
-CAD gratuito per la stampa 3D su iPad, Mac e iPhone Duo. Disegna, estrudi, arrotonda, controlla ed esporta in STL. Nessun account, nessun abbonamento.
+CAD per la stampa 3D su iPad, Mac e iPhone Duo. Paghi una volta, tutto incluso per sempre: nessun abbonamento, nessun acquisto in-app, nessuna pubblicità.
 ```
 
 ## Description
-<!-- 1880/4000 characters -->
+<!-- 1861/4000 characters -->
 ```
-Progetta pezzi veri per la tua stampante 3D, direttamente su iPad, Mac e iPhone Duo aperto. Formwerk è un'app CAD precisa e gratuita: disegna lo schizzo, estrudi, arrotonda gli spigoli e manda il pezzo allo slicer.
+Progetta pezzi veri per la tua stampante 3D, direttamente su iPad, Mac e iPhone Duo aperto. Formwerk è un'app CAD precisa: disegna lo schizzo, estrudi, arrotonda gli spigoli e manda il pezzo allo slicer.
 Nessun account, nessun abbonamento, nessun tracciamento. I tuoi progetti restano sul tuo dispositivo.
 La tua prima stampa in 10 minuti, con un tutorial interattivo che puoi saltare quando vuoi.
 
@@ -37,7 +37,7 @@ PRONTO PER LA STAMPA
 • Controllo di stampa: solido chiuso, sbalzi, pareti sottili, dimensioni del piano
 • Appoggia in piano: tocca una faccia e si posa sul piano di stampa
 • Stima del filamento
-• Esportazione STL per ogni slicer, gratis
+• Esportazione STL per ogni slicer
 
 PARTI DA UN MODELLO
 Portachiavi, scatola, staffa da muro, vaso, supporto per telefono e gancio da muro. Ogni modello è fatto di passaggi normali, quindi puoi modificare tutto.
@@ -49,9 +49,9 @@ PENSATO PER I DISPOSITIVI APPLE
 • Salva su iCloud Drive o in qualsiasi cartella
 • 16 lingue
 
-FORMWERK PRO: UN SOLO ACQUISTO, NESSUN ABBONAMENTO
-Tutto quanto sopra è gratis. Se stampi molto, sblocchi Formwerk Pro una volta sola per circa 10 CHF / 10 €:
-• Esportazione 3MF, STEP, OBJ e USDZ
+PAGHI UNA VOLTA, TUTTO INCLUSO
+Paghi una volta. Tutto incluso, per sempre. Nessun abbonamento, nessun acquisto in-app, nessuna pubblicità, nessun limite:
+• Esportazione STL, 3MF, STEP, OBJ e USDZ
 • Importazione STEP
 • Vista AR a grandezza reale
 • Orientamento automatico per la migliore posizione di stampa
@@ -68,13 +68,7 @@ stl,3mf,step,slicer,bambu,prusa,stampante,modellazione,progettazione,disegno,sch
 ```
 
 ## What's New in Version 1.1
-<!-- 582/4000 characters -->
+<!-- 128/4000 characters -->
 ```
-• Formwerk Pro: un solo acquisto, nessun abbonamento. Aggiunge esportazione 3MF/STEP/OBJ/USDZ, importazione STEP, vista AR, orientamento automatico, Serie, Svuota e Dividi. Modellazione, modelli, controllo di stampa ed esportazione STL restano gratis.
-• Tutorial interattivo: la tua prima stampa in 10 minuti
-• iPhone Duo: l'editor completo sul grande schermo interno
-• Compressione e hover di Apple Pencil Pro, più scorciatoie da tastiera
-• Salvataggio su iCloud Drive o in qualsiasi cartella
-• Appoggia in piano con un tocco
-• Nuovi modelli: supporto per telefono e gancio da muro
+La prima versione di Formwerk: progetta pezzi per la tua stampante 3D su iPad, Mac e iPhone Duo. Paghi una volta, tutto incluso.
 ```

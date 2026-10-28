@@ -15,15 +15,15 @@ Formwerk：3D CAD 建模與列印
 ```
 
 ## Promotional text
-<!-- 90/170 characters -->
+<!-- 85/170 characters -->
 ```
-在 iPad、Mac 和 iPhone Duo 上免費使用的 3D 列印 CAD。畫草圖、擠出、圓角、列印檢查、匯出 STL，一次搞定。不需要帳號，沒有訂閱，資料只留在你的裝置上。
+在 iPad、Mac 和 iPhone Duo 上使用的 3D 列印 CAD。一次購買，所有功能永久可用：沒有訂閱，沒有 App 內購買，沒有廣告。資料只留在你的裝置上。
 ```
 
 ## Description
-<!-- 755/4000 characters -->
+<!-- 743/4000 characters -->
 ```
-在 iPad、Mac 和展開的 iPhone Duo 上，直接為你的 3D 印表機設計真正能用的零件。Formwerk 是一款精確又免費的 CAD App：畫草圖、擠出、導圓角，再把零件傳到切片軟體。
+在 iPad、Mac 和展開的 iPhone Duo 上，直接為你的 3D 印表機設計真正能用的零件。Formwerk 是一款精確的 CAD App：畫草圖、擠出、導圓角，再把零件傳到切片軟體。
 不需要帳號，沒有訂閱，沒有追蹤。你的設計只存在你的裝置上。
 跟著做的互動教學，10 分鐘完成第一次列印，隨時可以略過。
 
@@ -37,7 +37,7 @@ Formwerk：3D CAD 建模與列印
 • 列印檢查：封閉實體、懸空、薄壁、熱床尺寸
 • 平放：點一下某個面，它就貼到列印平台上
 • 線材用量估算
-• 適用於所有切片軟體的 STL 匯出，免費
+• 適用於所有切片軟體的 STL 匯出
 
 從範本開始
 鑰匙圈、盒子、壁掛支架、花盆、手機架和掛勾。每個範本都由一般步驟組成，所以一切都能修改。
@@ -49,9 +49,9 @@ Formwerk：3D CAD 建模與列印
 • 儲存到 iCloud 雲碟或任何資料夾
 • 16 種語言
 
-FORMWERK PRO：一次購買，無需訂閱
-以上功能全部免費。如果你常常列印，可以一次解鎖 Formwerk Pro：
-• 匯出 3MF、STEP、OBJ 和 USDZ
+一次購買，全部包含
+一次購買，所有功能永久可用。沒有訂閱，沒有 App 內購買，沒有廣告，沒有限制：
+• 匯出 STL、3MF、STEP、OBJ 和 USDZ
 • 匯入 STEP
 • 真實尺寸的 AR 檢視
 • 自動擺放，找出最佳列印方向
@@ -64,17 +64,11 @@ Formwerk 是開放原始碼軟體（MPL-2.0）。不需要帳號，沒有廣告�
 ## Keywords
 <!-- 95/100 bytes (51 characters, 15 terms) -->
 ```
-stl,3mf,step,切片,拓竹,bambu,製圖,繪圖,模型,三維,創客,草圖,免費,機械,打印
+stl,3mf,step,切片,拓竹,bambu,製圖,繪圖,模型,三維,創客,草圖,工程,機械,打印
 ```
 
 ## What's New in Version 1.1
-<!-- 228/4000 characters -->
+<!-- 64/4000 characters -->
 ```
-• Formwerk Pro：一次購買，無需訂閱。解鎖 3MF/STEP/OBJ/USDZ 匯出、STEP 匯入、AR 檢視、自動擺放、陣列、薄殼和分割。建模、範本、列印檢查和 STL 匯出繼續免費。
-• 互動教學：10 分鐘完成第一次列印
-• iPhone Duo：展開後的內螢幕可使用完整編輯器
-• 支援 Apple Pencil Pro 的擠壓與懸停，以及鍵盤快速鍵
-• 儲存到 iCloud 雲碟或任何資料夾
-• 一鍵平放
-• 新範本：手機架和掛勾
+Formwerk 首次推出：在 iPad、Mac 和 iPhone Duo 上為你的 3D 印表機設計零件。一次購買，全部包含。
 ```

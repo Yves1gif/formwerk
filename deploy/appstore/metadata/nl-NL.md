@@ -15,15 +15,15 @@ Ontwerp eigen printonderdelen
 ```
 
 ## Promotional text
-<!-- 152/170 characters -->
+<!-- 154/170 characters -->
 ```
-Gratis CAD voor 3D-printen op iPad, Mac en iPhone Duo. Schetsen, extruderen, afronden, controleren en exporteren als STL. Geen account, geen abonnement.
+CAD voor 3D-printen op iPad, Mac en iPhone Duo. Eén keer betalen, alles inbegrepen, voor altijd: geen abonnement, geen in-app-aankopen, geen advertenties.
 ```
 
 ## Description
-<!-- 1832/4000 characters -->
+<!-- 1830/4000 characters -->
 ```
-Ontwerp echte onderdelen voor je 3D-printer, rechtstreeks op iPad, Mac en de opengevouwen iPhone Duo. Formwerk is een nauwkeurige, gratis CAD-app: schetsen, vormen omhoog trekken, randen afronden en het onderdeel naar je slicer sturen.
+Ontwerp echte onderdelen voor je 3D-printer, rechtstreeks op iPad, Mac en de opengevouwen iPhone Duo. Formwerk is een nauwkeurige CAD-app: schetsen, vormen omhoog trekken, randen afronden en het onderdeel naar je slicer sturen.
 Geen account, geen abonnement, geen tracking. Je ontwerpen blijven op je apparaat.
 Je eerste print in 10 minuten, met een interactieve tutorial die je altijd kunt overslaan.
 
@@ -37,7 +37,7 @@ KLAAR OM TE PRINTEN
 • Printcheck: gesloten solid, overhangen, dunne wanden, bedgrootte
 • Plat leggen: tik op een vlak en het ligt op het printbed
 • Schatting van het filament
-• STL-export voor elke slicer, gratis
+• STL-export voor elke slicer
 
 BEGIN MET EEN SJABLOON
 Sleutelhanger, doos, muurbeugel, bloempot, telefoonstandaard en wandhaak. Elk sjabloon bestaat uit gewone stappen, dus je kunt alles aanpassen.
@@ -49,9 +49,9 @@ GEMAAKT VOOR APPLE-APPARATEN
 • Bewaar in iCloud Drive of in elke andere map
 • 16 talen
 
-FORMWERK PRO: EENMALIG KOPEN, GEEN ABONNEMENT
-Alles hierboven is gratis. Print je veel, dan ontgrendel je Formwerk Pro eenmalig voor ongeveer € 10:
-• Export naar 3MF, STEP, OBJ en USDZ
+EÉN KEER BETALEN, ALLES INBEGREPEN
+Eén keer betalen. Alles inbegrepen, voor altijd. Geen abonnement, geen in-app-aankopen, geen advertenties, geen limieten:
+• Export naar STL, 3MF, STEP, OBJ en USDZ
 • STEP-import
 • AR-weergave op ware grootte
 • Automatisch oriënteren voor de beste printpositie
@@ -68,13 +68,7 @@ stl,3mf,step,slicer,bambu,prusa,printer,onderdelen,modelleren,tekenen,schets,mak
 ```
 
 ## What's New in Version 1.1
-<!-- 540/4000 characters -->
+<!-- 132/4000 characters -->
 ```
-• Formwerk Pro: eenmalig kopen, geen abonnement. Voegt export naar 3MF/STEP/OBJ/USDZ toe, plus STEP-import, AR-weergave, automatisch oriënteren, Patroon, Uithollen en Splitsen. Modelleren, sjablonen, printcheck en STL-export blijven gratis.
-• Interactieve tutorial: je eerste print in 10 minuten
-• iPhone Duo: de volledige editor op het opengevouwen binnenscherm
-• Knijpen en hover op Apple Pencil Pro, plus toetscombinaties
-• Bewaar in iCloud Drive of in elke map
-• Plat leggen met één tik
-• Nieuwe sjablonen: telefoonstandaard en wandhaak
+De eerste versie van Formwerk: ontwerp onderdelen voor je 3D-printer op iPad, Mac en iPhone Duo. Eén keer betalen, alles inbegrepen.
 ```

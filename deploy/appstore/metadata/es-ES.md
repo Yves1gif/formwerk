@@ -15,15 +15,15 @@ Diseña piezas para imprimir
 ```
 
 ## Promotional text
-<!-- 168/170 characters -->
+<!-- 151/170 characters -->
 ```
-CAD gratis para impresión 3D en iPad, Mac y iPhone Duo. Dibuja, extruye, redondea, comprueba y exporta en STL. Sin cuenta, sin suscripción, tus datos en tu dispositivo.
+CAD para impresión 3D en iPad, Mac y iPhone Duo. Paga una vez, todo incluido para siempre: sin suscripción, sin compras dentro de la app, sin anuncios.
 ```
 
 ## Description
-<!-- 1875/4000 characters -->
+<!-- 1860/4000 characters -->
 ```
-Diseña piezas reales para tu impresora 3D, directamente en iPad, Mac y en el iPhone Duo desplegado. Formwerk es una app de CAD precisa y gratuita: dibuja el boceto, extruye, redondea las aristas y envía la pieza a tu laminador.
+Diseña piezas reales para tu impresora 3D, directamente en iPad, Mac y en el iPhone Duo desplegado. Formwerk es una app de CAD precisa: dibuja el boceto, extruye, redondea las aristas y envía la pieza a tu laminador.
 Sin cuenta, sin suscripción, sin rastreo. Tus diseños se quedan en tu dispositivo.
 Tu primera impresión en 10 minutos, con un tutorial interactivo que puedes saltar cuando quieras.
 
@@ -37,7 +37,7 @@ LISTO PARA IMPRIMIR
 • Comprobación de impresión: sólido cerrado, voladizos, paredes finas, tamaño de la cama
 • Apoyar en plano: toca una cara y queda sobre la cama
 • Estimación de filamento
-• Exportación STL para cualquier laminador, gratis
+• Exportación STL para cualquier laminador
 
 EMPIEZA CON UNA PLANTILLA
 Llavero, caja, escuadra de pared, maceta, soporte para móvil y gancho de pared. Cada plantilla está hecha de pasos normales, así que puedes cambiarlo todo.
@@ -49,9 +49,9 @@ HECHO PARA DISPOSITIVOS APPLE
 • Guarda en iCloud Drive o en cualquier carpeta
 • 16 idiomas
 
-FORMWERK PRO: UNA SOLA COMPRA, SIN SUSCRIPCIÓN
-Todo lo anterior es gratis. Si imprimes mucho, desbloquea Formwerk Pro una sola vez por unos 10 €:
-• Exportación 3MF, STEP, OBJ y USDZ
+UN SOLO PAGO, TODO INCLUIDO
+Paga una vez. Todo incluido, para siempre. Sin suscripción, sin compras dentro de la app, sin anuncios, sin límites:
+• Exportación STL, 3MF, STEP, OBJ y USDZ
 • Importación STEP
 • Vista RA a tamaño real
 • Orientación automática para la mejor posición de impresión
@@ -68,13 +68,7 @@ stl,3mf,step,laminador,slicer,bambu,prusa,impresora,modelado,diseño,boceto,dibu
 ```
 
 ## What's New in Version 1.1
-<!-- 580/4000 characters -->
+<!-- 119/4000 characters -->
 ```
-• Formwerk Pro: una sola compra, sin suscripción. Añade exportación 3MF/STEP/OBJ/USDZ, importación STEP, vista RA, orientación automática, Patrón, Vaciar y Dividir. El modelado, las plantillas, la comprobación de impresión y la exportación STL siguen gratis.
-• Tutorial interactivo: tu primera impresión en 10 minutos
-• iPhone Duo: el editor completo en la pantalla interior
-• Gesto de apretar y hover del Apple Pencil Pro, y atajos de teclado
-• Guarda en iCloud Drive o en cualquier carpeta
-• Apoyar en plano con un toque
-• Nuevas plantillas: soporte para móvil y gancho de pared
+Primera versión de Formwerk: diseña piezas para tu impresora 3D en iPad, Mac y iPhone Duo. Un solo pago, todo incluido.
 ```

@@ -15,15 +15,15 @@ Formwerk: 3D CAD ve Baskı
 ```
 
 ## Promotional text
-<!-- 153/170 characters -->
+<!-- 139/170 characters -->
 ```
-iPad, Mac ve iPhone Duo için ücretsiz 3D baskı CAD'i. Eskiz çiz, ekstrüde et, kenarları yuvarla, kontrol et ve STL olarak aktar. Hesap yok, abonelik yok.
+iPad, Mac ve iPhone Duo için 3D baskı CAD'i. Bir kez öde, her şey sonsuza dek dahil: abonelik yok, uygulama içi satın alma yok, reklam yok.
 ```
 
 ## Description
-<!-- 1774/4000 characters -->
+<!-- 1739/4000 characters -->
 ```
-3D yazıcın için gerçek parçalar tasarla: doğrudan iPad'de, Mac'te ve açılmış iPhone Duo'da. Formwerk hassas ve ücretsiz bir CAD uygulaması: eskiz çiz, şekilleri yükselt, kenarları yuvarla ve parçayı dilimleyiciye gönder.
+3D yazıcın için gerçek parçalar tasarla: doğrudan iPad'de, Mac'te ve açılmış iPhone Duo'da. Formwerk hassas bir CAD uygulaması: eskiz çiz, şekilleri yükselt, kenarları yuvarla ve parçayı dilimleyiciye gönder.
 Hesap yok, abonelik yok, takip yok. Tasarımların cihazında kalır.
 İlk baskın 10 dakikada, istediğin an geçebileceğin etkileşimli bir eğitimle.
 
@@ -37,7 +37,7 @@ BASKIYA HAZIR
 • Baskı kontrolü: kapalı katı, çıkıntılar (overhang), ince duvarlar, tabla boyutu
 • Düz yatır: bir yüzeye dokun, tablaya otursun
 • Filament tahmini
-• Her dilimleyici için STL dışa aktarma, ücretsiz
+• Her dilimleyici için STL dışa aktarma
 
 BİR ŞABLONLA BAŞLA
 Anahtarlık, kutu, duvar braketi, saksı, telefon standı ve duvar askısı. Her şablon normal adımlardan oluşur, yani her şeyi değiştirebilirsin.
@@ -49,9 +49,9 @@ APPLE CİHAZLARI İÇİN YAPILDI
 • iCloud Drive'a ya da istediğin herhangi bir klasöre kaydet
 • 16 dil
 
-FORMWERK PRO: TEK SEFERLİK SATIN ALMA, ABONELİK YOK
-Yukarıdakilerin hepsi ücretsiz. Çok baskı alıyorsan Formwerk Pro'yu bir kez satın al ve şunları aç:
-• 3MF, STEP, OBJ ve USDZ dışa aktarma
+BİR KEZ ÖDE, HER ŞEY DAHİL
+Bir kez öde. Her şey dahil, sonsuza dek. Abonelik yok, uygulama içi satın alma yok, reklam yok, sınır yok:
+• STL, 3MF, STEP, OBJ ve USDZ dışa aktarma
 • STEP içe aktarma
 • Gerçek boyutta AR görünümü
 • En iyi baskı konumu için otomatik yönlendirme
@@ -68,13 +68,7 @@ stl,3mf,step,dilimleyici,slicer,bambu,prusa,modelleme,tasarım,çizim,eskiz,make
 ```
 
 ## What's New in Version 1.1
-<!-- 530/4000 characters -->
+<!-- 112/4000 characters -->
 ```
-• Formwerk Pro: tek seferlik satın alma, abonelik yok. 3MF/STEP/OBJ/USDZ dışa aktarma, STEP içe aktarma, AR görünümü, otomatik yönlendirme, Desen, İçini Boşalt ve Böl ekler. Modelleme, şablonlar, baskı kontrolü ve STL dışa aktarma ücretsiz kalır.
-• Etkileşimli eğitim: ilk baskın 10 dakikada
-• iPhone Duo: açılmış iç ekranda tam düzenleyici
-• Apple Pencil Pro'da sıkma ve hover, ayrıca klavye kısayolları
-• iCloud Drive'a ya da herhangi bir klasöre kaydet
-• Tek dokunuşla düz yatır
-• Yeni şablonlar: telefon standı ve duvar askısı
+Formwerk'ün ilk sürümü: iPad, Mac ve iPhone Duo'da 3D yazıcın için parçalar tasarla. Bir kez öde, her şey dahil.
 ```

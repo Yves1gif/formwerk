@@ -15,15 +15,15 @@ Desain part untuk printer 3D
 ```
 
 ## Promotional text
-<!-- 170/170 characters -->
+<!-- 156/170 characters -->
 ```
-CAD gratis untuk cetak 3D di iPad, Mac, dan iPhone Duo. Buat sketsa, extrude, bulatkan tepi, cek, lalu ekspor STL. Tanpa akun, tanpa langganan, data tetap di perangkatmu.
+CAD untuk cetak 3D di iPad, Mac, dan iPhone Duo. Bayar sekali, semua fitur termasuk selamanya: tanpa langganan, tanpa pembelian dalam aplikasi, tanpa iklan.
 ```
 
 ## Description
-<!-- 1749/4000 characters -->
+<!-- 1745/4000 characters -->
 ```
-Desain part asli untuk printer 3D kamu, langsung di iPad, Mac, dan iPhone Duo yang terbuka. Formwerk adalah aplikasi CAD yang presisi dan gratis: buat sketsa, tarik bentuknya ke atas, bulatkan tepinya, lalu kirim ke slicer.
+Desain part asli untuk printer 3D kamu, langsung di iPad, Mac, dan iPhone Duo yang terbuka. Formwerk adalah aplikasi CAD yang presisi: buat sketsa, tarik bentuknya ke atas, bulatkan tepinya, lalu kirim ke slicer.
 Tanpa akun, tanpa langganan, tanpa pelacakan. Desainmu tetap di perangkatmu.
 Cetakan pertamamu dalam 10 menit, dengan tutorial interaktif yang bisa dilewati kapan saja.
 
@@ -37,7 +37,7 @@ SIAP DICETAK
 • Cek cetak: solid tertutup, overhang, dinding tipis, ukuran bed
 • Rebahkan: ketuk satu sisi, langsung menempel di bed
 • Perkiraan filamen
-• Ekspor STL untuk semua slicer, gratis
+• Ekspor STL untuk semua slicer
 
 MULAI DARI TEMPLATE
 Gantungan kunci, kotak, braket dinding, pot tanaman, dudukan HP, dan kait dinding. Setiap template dibuat dari langkah biasa, jadi semuanya bisa kamu ubah.
@@ -49,9 +49,9 @@ DIBUAT UNTUK PERANGKAT APPLE
 • Simpan ke iCloud Drive atau folder mana saja
 • 16 bahasa
 
-FORMWERK PRO: SEKALI BELI, TANPA LANGGANAN
-Semua fitur di atas gratis. Kalau kamu sering mencetak, buka Formwerk Pro dengan sekali beli:
-• Ekspor 3MF, STEP, OBJ, dan USDZ
+BAYAR SEKALI, SEMUA TERMASUK
+Bayar sekali. Semua termasuk, selamanya. Tanpa langganan, tanpa pembelian dalam aplikasi, tanpa iklan, tanpa batasan:
+• Ekspor STL, 3MF, STEP, OBJ, dan USDZ
 • Impor STEP
 • Tampilan AR ukuran asli
 • Orientasi otomatis untuk posisi cetak terbaik
@@ -68,13 +68,7 @@ stl,3mf,step,slicer,bambu,prusa,printing,modeling,sketsa,gambar,teknik,maker,mod
 ```
 
 ## What's New in Version 1.1
-<!-- 512/4000 characters -->
+<!-- 117/4000 characters -->
 ```
-• Formwerk Pro: sekali beli, tanpa langganan. Menambahkan ekspor 3MF/STEP/OBJ/USDZ, impor STEP, tampilan AR, orientasi otomatis, Pola, Kosongkan, dan Belah. Modeling, template, cek cetak, dan ekspor STL tetap gratis.
-• Tutorial interaktif: cetakan pertama dalam 10 menit
-• iPhone Duo: editor lengkap di layar dalam yang terbuka
-• Remas dan hover di Apple Pencil Pro, plus pintasan keyboard
-• Simpan ke iCloud Drive atau folder mana saja
-• Rebahkan dengan sekali ketuk
-• Template baru: dudukan HP dan kait dinding
+Rilis pertama Formwerk: desain part untuk printer 3D kamu di iPad, Mac, dan iPhone Duo. Bayar sekali, semua termasuk.
 ```

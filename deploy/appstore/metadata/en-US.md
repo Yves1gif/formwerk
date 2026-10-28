@@ -15,15 +15,15 @@ Design parts for 3D printing
 ```
 
 ## Promotional text
-<!-- 166/170 characters -->
+<!-- 165/170 characters -->
 ```
-Free CAD for 3D printing on iPad, Mac and iPhone Duo. Sketch, extrude, round edges, check and export STL. No account, no subscription, your data stays on your device.
+CAD for 3D printing on iPad, Mac and iPhone Duo. Pay once, everything included forever: no subscription, no in-app purchases, no ads. Your data stays on your device.
 ```
 
 ## Description
-<!-- 1629/4000 characters -->
+<!-- 1623/4000 characters -->
 ```
-Design real parts for your 3D printer, right on iPad, Mac and the unfolded iPhone Duo. Formwerk is a precise, free CAD app: sketch, pull up shapes, round the edges and send the part to your slicer.
+Design real parts for your 3D printer, right on iPad, Mac and the unfolded iPhone Duo. Formwerk is a precise CAD app: sketch, pull up shapes, round the edges and send the part to your slicer.
 No account, no subscription, no tracking. Your designs stay on your device.
 Your first print in 10 minutes, with a hands-on tutorial you can skip any time.
 
@@ -37,7 +37,7 @@ READY FOR THE PRINTER
 • Print check: closed solid, overhangs, thin walls, bed size
 • Lay flat: tap a face and it lands on the bed
 • Filament estimate
-• STL export for every slicer, free
+• STL export for every slicer
 
 START FROM A TEMPLATE
 Keychain, box, wall bracket, plant pot, phone stand and wall hook. Every template is built from normal steps, so you can change everything.
@@ -49,9 +49,9 @@ MADE FOR APPLE DEVICES
 • Save to iCloud Drive or any folder you like
 • 16 languages
 
-FORMWERK PRO: BUY ONCE, NO SUBSCRIPTION
-Everything above is free. If you print a lot, unlock Formwerk Pro once for about $10:
-• Export 3MF, STEP, OBJ and USDZ
+PAY ONCE, EVERYTHING INCLUDED
+Pay once. Everything included, forever. No subscription, no in-app purchases, no ads, no limits:
+• Export STL, 3MF, STEP, OBJ and USDZ
 • Import STEP
 • AR view at real size
 • Auto-orient for the best print position
@@ -68,13 +68,7 @@ stl,3mf,step,slicer,bambu,prusa,printer,modeling,sketch,solid,maker,mechanical,e
 ```
 
 ## What's New in Version 1.1
-<!-- 489/4000 characters -->
+<!-- 123/4000 characters -->
 ```
-• Formwerk Pro: a one-time purchase, no subscription. It adds 3MF/STEP/OBJ/USDZ export, STEP import, AR view, auto-orient, Pattern, Hollow and Split. Modelling, templates, print check and STL export stay free.
-• Interactive tutorial: your first print in 10 minutes
-• iPhone Duo: the full editor on the unfolded inner screen
-• Apple Pencil Pro squeeze and hover, plus keyboard shortcuts
-• Save to iCloud Drive or any folder
-• Lay flat with one tap
-• New templates: phone stand and wall hook
+The first release of Formwerk: design parts for your 3D printer on iPad, Mac and iPhone Duo. Pay once, everything included.
 ```
