@@ -63,7 +63,8 @@ enum PrintChecker {
             var marks: [Int: UInt8] = [:]
             let (overhangFaces, overhangArea) = overhangs(b.mesh, bedZ: all.min.z, maxAngle: s.overhangAngle)
             for f in overhangFaces { marks[f] = 3 }
-            if overhangArea > 1 {
+            // Under 0.25 cm² a printer bridges it fine (tiny fillet or letter undersides); only warn above that.
+            if overhangArea > 25 {
                 r.issues.append(.init(kind: .overhangs, body: b.id,
                                       detail: String(localized: "\(Format.number(overhangArea / 100, digits: 1)) cm² hang over more than \(Int(s.overhangAngle))°. They need supports or a different orientation.")))
             }

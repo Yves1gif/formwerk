@@ -307,6 +307,12 @@ final class ViewportPlatformView: MTKView, UIGestureRecognizerDelegate, UIPencil
 
     override var canBecomeFirstResponder: Bool { true }
 
+    /// Take the keyboard as soon as the view is on screen, so letter keys work without tapping it first.
+    override func didMoveToWindow() {
+        super.didMoveToWindow()
+        if window != nil { DispatchQueue.main.async { [weak self] in self?.becomeFirstResponder() } }
+    }
+
     override func pressesBegan(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
         var handled = false
         for p in presses {
@@ -372,6 +378,14 @@ final class ViewportPlatformView: MTKView {
     private var otherNav: MouseNav = .pan
 
     override var acceptsFirstResponder: Bool { true }
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        DispatchQueue.main.async { [weak self] in
+            guard let self, let w = self.window, !(w.firstResponder is NSTextView) else { return }
+            w.makeFirstResponder(self)
+        }
+    }
     override var isFlipped: Bool { true }  // y grows downwards, like on iPad
 
     private func point(_ e: NSEvent) -> CGPoint { convert(e.locationInWindow, from: nil) }

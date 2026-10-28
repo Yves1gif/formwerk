@@ -5547,6 +5547,100 @@
         }
       }
     },
+    "Continue": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "متابعة"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weiter"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continuar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continuer"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "जारी रखें"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lanjutkan"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continua"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "続ける"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "계속"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Doorgaan"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dalej"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continuar"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Devam"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "继续"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "繼續"
+          }
+        }
+      }
+    },
     "Copies the body in a row or around an axis.": {
       "localizations": {
         "ar": {
@@ -11845,96 +11939,96 @@
         }
       }
     },
-    "Formwerk is made for big screens. Open your iPhone Duo to design with the full editor.": {
+    "Formwerk was designed for the big screen of iPhone Duo, iPad and Mac. It works on this iPhone too, but tools can feel a bit cramped.": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "صُمّم Formwerk للشاشات الكبيرة. افتح جهاز iPhone Duo لتصمّم باستخدام المحرّر الكامل."
+            "value": "صُمّم Formwerk للشاشة الكبيرة في iPhone Duo وiPad وMac. يعمل أيضًا على هذا الـ iPhone، لكن الأدوات قد تبدو ضيقة بعض الشيء."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Formwerk ist für grosse Bildschirme gemacht. Öffne dein iPhone Duo, um mit dem ganzen Editor zu konstruieren."
+            "value": "Formwerk wurde für den grossen Bildschirm von iPhone Duo, iPad und Mac entwickelt. Es läuft auch auf diesem iPhone, die Werkzeuge können aber etwas eng wirken."
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Formwerk está hecho para pantallas grandes. Abre tu iPhone Duo para diseñar con el editor completo."
+            "value": "Formwerk se diseñó para la pantalla grande del iPhone Duo, el iPad y el Mac. También funciona en este iPhone, pero las herramientas pueden verse algo apretadas."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Formwerk est conçu pour les grands écrans. Ouvrez votre iPhone Duo pour concevoir avec l’éditeur complet."
+            "value": "Formwerk a été conçu pour le grand écran de l’iPhone Duo, de l’iPad et du Mac. Il fonctionne aussi sur cet iPhone, mais les outils peuvent sembler un peu à l’étroit."
           }
         },
         "hi": {
           "stringUnit": {
             "state": "translated",
-            "value": "Formwerk बड़ी स्क्रीन के लिए बना है। पूरे एडिटर से डिज़ाइन करने के लिए अपना iPhone Duo खोलें।"
+            "value": "Formwerk को iPhone Duo, iPad और Mac की बड़ी स्क्रीन के लिए बनाया गया है। यह इस iPhone पर भी चलता है, पर टूल थोड़े तंग लग सकते हैं।"
           }
         },
         "id": {
           "stringUnit": {
             "state": "translated",
-            "value": "Formwerk dibuat untuk layar besar. Buka iPhone Duo kamu untuk mendesain dengan editor lengkap."
+            "value": "Formwerk dirancang untuk layar besar iPhone Duo, iPad, dan Mac. Aplikasi ini juga berjalan di iPhone ini, tetapi alatnya bisa terasa agak sempit."
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Formwerk è fatto per schermi grandi. Apri il tuo iPhone Duo per progettare con l’editor completo."
+            "value": "Formwerk è stato progettato per il grande schermo di iPhone Duo, iPad e Mac. Funziona anche su questo iPhone, ma gli strumenti possono sembrare un po’ stretti."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Formwerkは大きな画面向けに作られています。iPhone Duoを開くと、すべての機能を使って設計できます。"
+            "value": "FormwerkはiPhone Duo、iPad、Macの大きな画面向けに設計されています。このiPhoneでも使えますが、ツールが少し窮屈に感じられることがあります。"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "Formwerk는 큰 화면을 위해 만들어졌습니다. iPhone Duo를 펼쳐 전체 편집기로 디자인하세요."
+            "value": "Formwerk는 iPhone Duo, iPad, Mac의 큰 화면을 위해 설계되었습니다. 이 iPhone에서도 작동하지만 도구가 다소 좁게 느껴질 수 있습니다."
           }
         },
         "nl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Formwerk is gemaakt voor grote schermen. Open je iPhone Duo om te ontwerpen met de volledige editor."
+            "value": "Formwerk is ontworpen voor het grote scherm van iPhone Duo, iPad en Mac. Het werkt ook op deze iPhone, maar de gereedschappen kunnen wat krap aanvoelen."
           }
         },
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Formwerk jest stworzony dla dużych ekranów. Rozłóż iPhone’a Duo, aby projektować w pełnym edytorze."
+            "value": "Formwerk zaprojektowano z myślą o dużym ekranie iPhone’a Duo, iPada i Maca. Działa też na tym iPhonie, ale narzędzia mogą wydawać się nieco ściśnięte."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "O Formwerk foi feito para telas grandes. Abra seu iPhone Duo para projetar com o editor completo."
+            "value": "O Formwerk foi criado para a tela grande do iPhone Duo, do iPad e do Mac. Ele também funciona neste iPhone, mas as ferramentas podem parecer um pouco apertadas."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Formwerk büyük ekranlar için yapıldı. Tam düzenleyiciyle tasarlamak için iPhone Duo’nu aç."
+            "value": "Formwerk, iPhone Duo, iPad ve Mac’in büyük ekranı için tasarlandı. Bu iPhone’da da çalışır ama araçlar biraz sıkışık görünebilir."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "Formwerk 专为大屏幕设计。展开你的 iPhone Duo，即可使用完整编辑器进行设计。"
+            "value": "Formwerk 专为 iPhone Duo、iPad 和 Mac 的大屏幕设计。它也能在这台 iPhone 上运行，但工具可能会显得有些拥挤。"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "Formwerk 專為大螢幕設計。展開你的 iPhone Duo，即可使用完整編輯器進行設計。"
+            "value": "Formwerk 專為 iPhone Duo、iPad 和 Mac 的大螢幕設計。它也能在這台 iPhone 上執行，但工具可能會顯得有些擁擠。"
           }
         }
       }
@@ -15793,6 +15887,100 @@
         }
       }
     },
+    "Made for iPhone Duo": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مصمَّم لجهاز iPhone Duo"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gemacht fürs iPhone Duo"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diseñado para el iPhone Duo"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conçu pour l’iPhone Duo"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone Duo के लिए बनाया गया"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dibuat untuk iPhone Duo"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pensato per iPhone Duo"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone Duoのために設計"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone Duo를 위해 설계됨"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gemaakt voor iPhone Duo"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stworzone dla iPhone’a Duo"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Feito para o iPhone Duo"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone Duo için tasarlandı"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "专为 iPhone Duo 打造"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "專為 iPhone Duo 打造"
+          }
+        }
+      }
+    },
     "Make it solid": {
       "localizations": {
         "ar": {
@@ -18049,6 +18237,100 @@
         }
       }
     },
+    "On an iPhone Duo, just unfold it for the full editor.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "على iPhone Duo، افتحه فقط لتحصل على المحرّر الكامل."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Auf dem iPhone Duo einfach aufklappen für den ganzen Editor."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En un iPhone Duo, despliégalo para usar el editor completo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur un iPhone Duo, dépliez-le simplement pour l’éditeur complet."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone Duo पर पूरे एडिटर के लिए बस उसे खोलें।"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Di iPhone Duo, cukup buka lipatannya untuk editor lengkap."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Su iPhone Duo, aprilo per avere l’editor completo."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone Duoなら、開くだけですべての機能を使えます。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone Duo에서는 펼치기만 하면 전체 편집기를 사용할 수 있습니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Op een iPhone Duo vouw je hem gewoon open voor de volledige editor."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Na iPhonie Duo po prostu go rozłóż, aby mieć pełny edytor."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No iPhone Duo, basta desdobrá-lo para usar o editor completo."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone Duo’da tam düzenleyici için cihazı açman yeterli."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在 iPhone Duo 上，展开即可使用完整编辑器。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在 iPhone Duo 上，展開即可使用完整編輯器。"
+          }
+        }
+      }
+    },
     "On circle": {
       "localizations": {
         "ar": {
@@ -18327,100 +18609,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "在線上"
-          }
-        }
-      }
-    },
-    "On other iPhones, use Formwerk on your iPad or Mac.": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "على أجهزة iPhone الأخرى، استخدم Formwerk على iPad أو Mac."
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Auf anderen iPhones nutze Formwerk auf deinem iPad oder Mac."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "En otros iPhone, usa Formwerk en tu iPad o Mac."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sur les autres iPhone, utilisez Formwerk sur votre iPad ou Mac."
-          }
-        },
-        "hi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "दूसरे iPhone पर, Formwerk को अपने iPad या Mac पर इस्तेमाल करें।"
-          }
-        },
-        "id": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Di iPhone lain, gunakan Formwerk di iPad atau Mac kamu."
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sugli altri iPhone, usa Formwerk su iPad o Mac."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ほかのiPhoneでは、iPadまたはMacでFormwerkをお使いください。"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "다른 iPhone에서는 iPad나 Mac에서 Formwerk를 사용하세요."
-          }
-        },
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Gebruik Formwerk op andere iPhones op je iPad of Mac."
-          }
-        },
-        "pl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Na innych iPhone’ach używaj Formwerk na iPadzie lub Macu."
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Em outros iPhones, use o Formwerk no iPad ou Mac."
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Diğer iPhone’larda Formwerk’ü iPad’inde veya Mac’inde kullan."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "在其他 iPhone 上，请在 iPad 或 Mac 上使用 Formwerk。"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "在其他 iPhone 上，請在 iPad 或 Mac 上使用 Formwerk。"
           }
         }
       }
@@ -18891,100 +19079,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "僅 Apple Pencil 繪圖"
-          }
-        }
-      }
-    },
-    "Open anyway": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "افتح على أي حال"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Trotzdem öffnen"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Abrir de todos modos"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ouvrir quand même"
-          }
-        },
-        "hi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "फिर भी खोलें"
-          }
-        },
-        "id": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tetap buka"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Apri comunque"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "このまま開く"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "그래도 열기"
-          }
-        },
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Toch openen"
-          }
-        },
-        "pl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Otwórz mimo to"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Abrir mesmo assim"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Yine de aç"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "仍然打开"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "仍要開啟"
           }
         }
       }
@@ -31491,100 +31585,6 @@
         }
       }
     },
-    "Three steps from idea to print. Free, no account, no ads.": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ثلاث خطوات من الفكرة إلى الطباعة. مجاني، بلا حساب، بلا إعلانات."
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Drei Schritte von der Idee zum Druck. Kostenlos, ohne Konto, ohne Werbung."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tres pasos de la idea a la impresión. Gratis, sin cuenta y sin anuncios."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Trois étapes de l’idée à l’impression. Gratuit, sans compte, sans publicité."
-          }
-        },
-        "hi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "विचार से प्रिंट तक तीन चरण। मुफ़्त, बिना अकाउंट, बिना विज्ञापन।"
-          }
-        },
-        "id": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tiga langkah dari ide ke cetak. Gratis, tanpa akun, tanpa iklan."
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tre passi dall’idea alla stampa. Gratis, senza account, senza pubblicità."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "アイデアから印刷まで3ステップ。無料で、アカウント不要、広告なしです。"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "아이디어에서 출력까지 세 단계. 무료, 계정 불필요, 광고 없음."
-          }
-        },
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Drie stappen van idee tot print. Gratis, geen account, geen advertenties."
-          }
-        },
-        "pl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Trzy kroki od pomysłu do wydruku. Za darmo, bez konta, bez reklam."
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Três etapas da ideia à impressão. Grátis, sem conta, sem anúncios."
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Fikirden baskıya üç adım. Ücretsiz, hesapsız, reklamsız."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "从创意到打印只需三步。免费、无需账户、没有广告。"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "從創意到列印只需三步。免費、無需帳號、沒有廣告。"
-          }
-        }
-      }
-    },
     "Three steps from idea to print. Free, no account, no limits.": {
       "localizations": {
         "ar": {
@@ -31675,6 +31675,100 @@
           "stringUnit": {
             "state": "translated",
             "value": "從創意到列印只需三步。免費、無需帳號、沒有限制。"
+          }
+        }
+      }
+    },
+    "Three steps from idea to print. No account, no ads, no subscription.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ثلاث خطوات من الفكرة إلى الطباعة. بلا حساب، بلا إعلانات، بلا اشتراك."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drei Schritte von der Idee zum Druck. Kein Konto, keine Werbung, kein Abo."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tres pasos de la idea a la impresión. Sin cuenta, sin anuncios, sin suscripción."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trois étapes de l’idée à l’impression. Sans compte, sans pub, sans abonnement."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आइडिया से प्रिंट तक तीन कदम। कोई अकाउंट नहीं, कोई विज्ञापन नहीं, कोई सब्सक्रिप्शन नहीं।"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tiga langkah dari ide ke cetak. Tanpa akun, tanpa iklan, tanpa langganan."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tre passi dall’idea alla stampa. Niente account, niente pubblicità, niente abbonamento."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アイデアから印刷まで3ステップ。アカウント不要、広告なし、サブスクなし。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "아이디어에서 출력까지 3단계. 계정 없음, 광고 없음, 구독 없음."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drie stappen van idee tot print. Geen account, geen advertenties, geen abonnement."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trzy kroki od pomysłu do wydruku. Bez konta, bez reklam, bez subskrypcji."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Três passos da ideia à impressão. Sem conta, sem anúncios, sem assinatura."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fikirden baskıya üç adım. Hesap yok, reklam yok, abonelik yok."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "从创意到打印只需三步。无需账户，无广告，无订阅。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "從創意到列印只需三步。無需帳號，無廣告，無訂閱。"
           }
         }
       }
@@ -33273,100 +33367,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "取消固定"
-          }
-        }
-      }
-    },
-    "Unfold your iPhone": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "افتح جهاز iPhone"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Klappe dein iPhone auf"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Despliega tu iPhone"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Dépliez votre iPhone"
-          }
-        },
-        "hi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "अपना iPhone खोलें"
-          }
-        },
-        "id": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Buka lipatan iPhone kamu"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Apri il tuo iPhone"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "iPhoneを開いてください"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "iPhone을 펼치세요"
-          }
-        },
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vouw je iPhone open"
-          }
-        },
-        "pl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Rozłóż iPhone’a"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Desdobre seu iPhone"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "iPhone’unu aç"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "展开你的 iPhone"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "展開你的 iPhone"
           }
         }
       }

@@ -17,10 +17,10 @@ iphone duo, foldable, fold
 ## 4. Screenshots
 Use the iPhone Duo inner-screen slot (1878×2670) if App Store Connect offers one. If not, use the closest iPhone slot. Take them with `-formwerkShot model|sketch|fillet|print|keychain` on the iPhone Duo simulator from Xcode 27.1. Screenshots from an older SDK would show letterboxing.
 
-## 5. Featuring nomination (App Store Connect → Apps → Featuring → Nominations). The user sends it.
+## 5. Featuring nomination (App Store Connect → Apps → Featuring → Nominations).
 - Type: App Enhancement
 - Name: Formwerk for iPhone Duo
 - Description:
-  Formwerk is a free CAD app for 3D printing that runs fully on the device: no account, no subscription, no data collected. It's built for iPhone Duo. On the unfolded inner screen it uses the full iPad-class editor (regular size classes), so people can design printable parts wherever they are: brackets, hooks, keychains, phone stands. Folded, it asks you to unfold. It has an interactive tutorial, a print check with auto-orient and lay-flat, AR Quick Look at real size, STL/3MF/STEP/USDZ export, and comes in 16 languages including Arabic (right-to-left).
+  Formwerk is a CAD app for 3D printing with a fair price: pay once (CHF 9.90), then everything is yours forever. There are no in-app purchases, no subscription, no ads and no limits. It runs fully on the device, with no account and no data collected, and it is open source. Built for iPhone Duo: on the unfolded inner screen it uses the full iPad-class editor, so people can design printable parts wherever they are: brackets, hooks, keychains, phone stands. Apple Pencil (including squeeze and hover), touch, mouse and keyboard are all first-class. It has an interactive tutorial, a print check with auto-orient and lay-flat, AR Quick Look at real size, STL/3MF/STEP/OBJ/USDZ export, iCloud Drive, and comes in 16 languages including Arabic (right-to-left).
 - Publish date: the date the Duo version goes live
 - Countries: all

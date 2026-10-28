@@ -50,7 +50,7 @@ targets:
       - path: App
       - path: Sources
       - path: Resources
-        excludes: ["Info.plist", "*.entitlements", "*.storekit"]
+        excludes: ["Info.plist", "*.entitlements"]
     dependencies:
       - framework: Vendor/OCCT/OCCT.xcframework
         embed: false
@@ -167,8 +167,6 @@ schemes:
       targets:
         Formwerk: all
         FormwerkUITests: [test]
-    run:
-      storeKitConfiguration: Resources/Formwerk.storekit
     test:
       targets: [FormwerkUITests]
   Formwerk:
@@ -176,7 +174,5 @@ schemes:
       targets:
         Formwerk: all
         FormwerkTests: [test]
-    run:
-      storeKitConfiguration: Resources/Formwerk.storekit
     test:
       targets: [FormwerkTests]

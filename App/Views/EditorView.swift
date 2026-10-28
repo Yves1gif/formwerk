@@ -17,9 +17,9 @@ struct EditorView: View {
     @State private var showBodies = false
     @State private var tutorialStep: TutorialStep?
     @State private var startTutorialAfterWelcome = false
-    @State private var openAnywayOnSmallPhone = false
+    /// The "made for iPhone Duo" note shows once; after that Formwerk simply runs in the phone layout.
+    @AppStorage("smallPhoneNoticeSeen") private var smallPhoneNoticeSeen = false
     @AppStorage("tutorialDone") private var tutorialDone = false
-    @ObservedObject private var pro = ProStore.shared
     #if os(iOS)
     @State private var arFile: ExportedFile?
     @State private var showInputSettings = false
@@ -51,7 +51,7 @@ struct EditorView: View {
             }
 
             if phoneTooSmall {
-                UnfoldView { withAnimation(.snappy) { openAnywayOnSmallPhone = true } }
+                UnfoldView { withAnimation(.snappy) { smallPhoneNoticeSeen = true } }
                     .ignoresSafeArea()
             }
 
@@ -106,17 +106,8 @@ struct EditorView: View {
         }
         .fullScreenCover(item: $arFile) { f in ARQuickLookView(url: f.url).ignoresSafeArea() }
         #endif
-        .sheet(isPresented: $model.showPaywall) { ProView(model: model) }
-        // STEP import is part of Formwerk Pro: without it, the paywall opens instead of the file picker.
-        .fileImporter(isPresented: Binding(get: { showImport && pro.isPro }, set: { showImport = $0 }),
-                      allowedContentTypes: UTType.stepFiles) { result in
+        .fileImporter(isPresented: $showImport, allowedContentTypes: UTType.stepFiles) { result in
             if case .success(let url) = result { model.importSTEP(url) }
-        }
-        .onChange(of: showImport) { _, wants in
-            if wants && !pro.isPro {
-                showImport = false
-                model.showPaywall = true
-            }
         }
         #if os(iOS)
         .toolbarRole(.editor)
@@ -139,7 +130,7 @@ struct EditorView: View {
     private var phoneTooSmall: Bool {
         #if os(iOS)
         return UIDevice.current.userInterfaceIdiom == .phone && sizeClass == .compact
-            && !openAnywayOnSmallPhone && (ScreenshotMode.current == nil || ScreenshotMode.current == .unfold)
+            && (ScreenshotMode.current == .unfold || (!smallPhoneNoticeSeen && ScreenshotMode.current == nil))
         #else
         return false
         #endif
@@ -249,7 +240,6 @@ struct EditorView: View {
                     model.makeUSDZ { url in if let url { arFile = ExportedFile(url: url, format: .usdz) } }
                 } label: {
                     Label("View in AR", systemImage: "arkit")
-                    if !pro.isPro { Text("Formwerk Pro") }
                 }
                 #endif
             } label: {
@@ -310,7 +300,6 @@ struct ToastView: View {
 struct EmptyDesignCard: View {
     @ObservedObject var model: EditorModel
     @Binding var showImport: Bool
-    @ObservedObject private var pro = ProStore.shared
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -326,7 +315,6 @@ struct EmptyDesignCard: View {
                 startButton("Sketch", icon: "pencil.and.outline", prominent: true) { model.startSketch() }
                 startButton("Box", icon: "cube") { model.start(.box) }
                 startButton("Import STEP", icon: "square.and.arrow.down") { showImport = true }
-                    .overlay(alignment: .topTrailing) { if !pro.isPro { ProBadge().padding(8) } }
             }
         }
         .frame(maxWidth: 500)

@@ -134,3 +134,29 @@ User: "develop it to completion, perfect it… how do I make a profit? 10 CHF on
 - 375 strings × 15 languages.
 - App Store texts for all 16 locales are in `deploy/appstore/metadata/`. Keywords like "bambu"/"prusa" may be rejected as trademarks (2.3.7).
 - Built only, not tested on the user's request (the Mac is overloaded). The self-test and unit tests still have to run (the box volume test was updated for the new box).
+
+## 2026-10-28 (evening): paid app instead of Pro, iPhone for everyone, nomination, tests
+- **Pricing changed by the user:** "Formwerk costs 9.90 once, after that free forever, no ads, no limits", "the app costs, it has no in-app purchase", "simpler".
+  - Formwerk is now a **paid app for CHF 9.90** (base country switched from USA to Switzerland in App Store Connect, so the Swiss price is exactly 9.90; other countries are converted automatically, e.g. 9.99 USD).
+  - All StoreKit code, the paywall, the PRO badges and the StoreKit test file are **removed**. Every feature is free after the purchase.
+  - Rejected: free + Pro (the user wanted it simpler); a subscription.
+  - iOS 1.0 shows "Rejected by developer" in App Store Connect and was never live, so there are no free users who would suddenly have to pay. The early-user exception is no longer needed and is gone too.
+  - Welcome text: "No account, no ads, no subscription."
+- **iPhone (user: "let it run on normal iPhones too, but with a note that it was made for the Duo and may feel cramped"):** the unfold block is gone.
+  - Narrow iPhone screens show **once** "Made for iPhone Duo …" with "Continue" (`smallPhoneNoticeSeen`), then the phone layout.
+  - The unfolded Duo uses the iPad layout as before.
+- **Keyboard:** all letter shortcuts now run only through the 3D view (`letterKey`), and the toolbar buttons no longer have plain-letter `keyboardShortcut`s.
+  - Why: SwiftUI shortcuts without ⌘ can also fire while you type a dimension.
+  - The 3D view takes the keyboard focus when it appears.
+- **Print check:** overhangs below 0.25 cm² no longer cause a warning. The keychain showed "0 cm² hang over…" because of tiny fillet areas.
+- **App Store Connect** (Chrome, user's own session):
+  - The paid apps agreement, bank account and tax forms were already active.
+  - **Small Business Program:** form filled in (4× "No" for associated developer accounts). The final legal statement (≤ 1 million USD revenue) must be ticked and sent by the user, because Claude may not make legal declarations.
+  - **Featuring nomination submitted:** "App launch" on 24 Nov 2026, iPhone/iPad/macOS, with description and GitHub link.
+  - Price **CHF 9.90**.
+- **Tests** (the user allowed testing again):
+  - 16/16 unit tests green.
+  - Self-test on the iPhone Duo simulator: all 8 templates build as valid solids and export in every format. Renders checked: keychain fillet goes all the way round; pot and saucer, hook, bracket, stand, box, coaster and comb look right.
+  - iPad mini (same layout as the unfolded Duo) checked in ar/de/ja: Arabic is mirrored correctly, long German words wrap.
+  - The "Made for iPhone Duo" note was checked on iPhone 17 Pro (de).
+  - Not possible: unfolding the Duo simulator from the command line (no simctl command for it), so there is no screenshot of the inner screen itself.

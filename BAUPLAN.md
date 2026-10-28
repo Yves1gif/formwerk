@@ -479,7 +479,7 @@ Every phase ends with something you can try on the iPad. Each phase gets an entr
 ---
 
 ## 12a. Money (decided 2026-10-28)
-Free download + one-time Formwerk Pro (CHF 10, no subscription). Details and reasons: BUSINESS-PLAN.md and PROJECT-LOG 2026-10-28.
+Paid app, CHF 9.90 once. No in-app purchases, no subscription, no ads, no limits. Details and reasons: BUSINESS-PLAN.md and PROJECT-LOG 2026-10-28.
 
 ## 12b. Next version backlog
 - **AI assistant, bring your own account:**

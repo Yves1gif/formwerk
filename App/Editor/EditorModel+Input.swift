@@ -331,12 +331,18 @@ extension EditorModel: ViewportInput {
         }
     }
 
-    /// Single-letter tools (BAUPLAN 6.3).
+    /// Single-letter tools (BAUPLAN 6.3). Only the 3D view answers them, so typing into a number field never starts a tool.
     private func letterKey(_ c: Character) -> Bool {
         if sketch?.editingDimension != nil { return false }
-        // Drawing keys: inside a sketch the sketch toolbar answers them; outside they open a new sketch.
+        if c == "k" { if sketch == nil { if tool != nil { cancelTool() }; startSketch() }; return true }
         if let t = SketchTool.allCases.first(where: { $0.shortcut?.character == c }) {
-            guard sketch == nil, t != .select, t != .dimension else { return false }
+            // In a sketch: same as tapping the toolbar button (pressing the active tool again stops it).
+            if let s = sketch {
+                if s.tool == t { cancelSketchAction() } else { setSketchTool(t) }
+                return true
+            }
+            // Outside a sketch, a drawing key opens a new sketch with that tool.
+            guard t != .select, t != .dimension else { return false }
             if tool != nil { cancelTool() }
             startSketch()
             setSketchTool(t)
@@ -349,7 +355,7 @@ extension EditorModel: ViewportInput {
             if sketch == nil && (!selectedEdges.isEmpty || !selectedFaces.isEmpty) { start(.fillet) } else { fitView() }
         case "h": start(.hole)
         case "m": start(.measure)
-        default: return false  // "k" (new sketch) belongs to the tool rail's Sketch button
+        default: return false
         }
         return true
     }

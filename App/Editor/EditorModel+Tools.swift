@@ -5,8 +5,6 @@ extension EditorModel {
     // MARK: - Opening tools
 
     func start(_ kind: ToolKind) {
-        // Only starting a Pro tool is gated; existing Pro steps stay editable (editFeature).
-        if let feature = kind.proFeature, !ProStore.shared.requirePro(feature, else: { showPaywall = true }) { return }
         if sketch != nil { finishSketch() }
         measurement = nil
         let d = design
@@ -287,7 +285,6 @@ extension EditorModel {
     // MARK: - Import
 
     func importSTEP(_ url: URL) {
-        guard ProStore.shared.requirePro(.stepImport, else: { showPaywall = true }) else { return }
         let access = url.startAccessingSecurityScopedResource()
         worker.run({ () -> Result<Data, Error> in
             defer { if access { url.stopAccessingSecurityScopedResource() } }

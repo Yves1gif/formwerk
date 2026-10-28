@@ -13,7 +13,6 @@ struct ToolRail: View {
         let layout = horizontal ? AnyLayout(HStackLayout(spacing: 4)) : AnyLayout(VStackLayout(spacing: 4))
         let rail = layout {
             RailButton(title: "Sketch", icon: "pencil.and.outline", active: false) { model.startSketch() }
-                .keyboardShortcut("k", modifiers: [])
             Divider().frame(width: horizontal ? nil : 30, height: horizontal ? 30 : nil)
             RailMenu(title: "Shapes", icon: "cube") {
                 toolButton(.box)
@@ -137,10 +136,11 @@ struct SketchToolbar: View {
             let layout = horizontal ? AnyLayout(HStackLayout(spacing: 4)) : AnyLayout(VStackLayout(spacing: 4))
             let tools = layout {
                     ForEach(SketchTool.allCases) { t in
-                        let button = RailButton(title: t.title, icon: t.icon, active: s.tool == t) {
+                        // Its letter key is handled by the 3D view (EditorModel.letterKey), not here:
+                        // a SwiftUI shortcut without ⌘ would also fire while typing a dimension.
+                        RailButton(title: t.title, icon: t.icon, active: s.tool == t) {
                             if s.tool == t { model.cancelSketchAction() } else { model.setSketchTool(t) }
                         }
-                        if let key = t.shortcut { button.keyboardShortcut(key, modifiers: []) } else { button }
                     }
                     if s.tool == .polygon {
                         PolygonSidesControl(sides: s.polygonSides, horizontal: horizontal) { model.sketch?.polygonSides = $0 }

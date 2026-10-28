@@ -15,8 +15,6 @@ struct PrintSheet: View {
     @State private var exporting = false
     @State private var shareFile: ExportedFile?
     @State private var fileName = "Formwerk"
-    @State private var showPro = false
-    @ObservedObject private var pro = ProStore.shared
 
     var body: some View {
         NavigationStack {
@@ -54,12 +52,9 @@ struct PrintSheet: View {
 
                 Section("Orientation") {
                     Button {
-                        if pro.isPro { model.autoOrient() } else { showPro = true }
+                        model.autoOrient()
                     } label: {
-                        HStack {
-                            Label("Auto-orient for least overhang", systemImage: "rotate.3d")
-                            if !pro.isPro { Spacer(minLength: 4); ProBadge() }
-                        }
+                        Label("Auto-orient for least overhang", systemImage: "rotate.3d")
                     }
                     Text("Tip: to rest a part on a certain face, select that face and use Lay flat.")
                         .font(.caption).foregroundStyle(.secondary)
@@ -89,7 +84,6 @@ struct PrintSheet: View {
                     }
                     Text(formatHint).font(.caption).foregroundStyle(.secondary)
                     Button {
-                        guard pro.isPro || !format.isPro else { showPro = true; return }
                         exporting = true
                         model.export(format, quality: quality, name: fileName) { file in
                             exporting = false
@@ -115,7 +109,6 @@ struct PrintSheet: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } }
             }
-            .sheet(isPresented: $showPro) { ProView(model: model) }
             #if os(iOS)
             .sheet(item: $shareFile) { file in ShareSheet(url: file.url) }
             #else
@@ -126,27 +119,21 @@ struct PrintSheet: View {
         .frame(minWidth: 480, minHeight: 620)
         #endif
         .onAppear {
-            // Free: STL. With Pro, 3MF stays the default (best for slicers).
-            if format.isPro && !pro.isPro { format = .stl }
             model.runPrintCheck()
         }
     }
 
-    /// The export formats as chips. Pro formats carry a small badge and open the paywall when Pro isn't unlocked.
+    /// The export formats as chips.
     private var formatChips: some View {
         HStack(spacing: 6) {
             ForEach(ExportFormat.allCases) { f in
-                let locked = f.isPro && !pro.isPro
                 Button {
-                    if locked { showPro = true } else { format = f }
+                    format = f
                 } label: {
-                    HStack(spacing: 4) {
-                        Text(f.rawValue)
-                            .font(.callout.weight(.semibold))
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.7)
-                        if locked { ProBadge() }
-                    }
+                    Text(f.rawValue)
+                        .font(.callout.weight(.semibold))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
                     .padding(.horizontal, 6)
                     .frame(maxWidth: .infinity, minHeight: 34)
                     .background(format == f ? Theme.blue : Color.primary.opacity(0.06),
@@ -243,7 +230,7 @@ struct WelcomeView: View {
             VStack(alignment: .leading, spacing: 26) {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Welcome to Formwerk").font(Theme.title(36))
-                    Text("Three steps from idea to print. Free, no account, no ads.")
+                    Text("Three steps from idea to print. No account, no ads, no subscription.")
                         .font(.title3).foregroundStyle(.secondary)
                 }
                 HStack(alignment: .top, spacing: 14) {

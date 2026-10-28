@@ -40,8 +40,6 @@ final class EditorModel: ObservableObject {
     @Published var printCheck: PrintCheckResult? { didSet { refreshScene() } }
     @Published var measurement: Measurement?
     @Published var showAllSketches = false { didSet { refreshScene() } }
-    /// Set when someone starts a Formwerk Pro feature without Pro; EditorView shows the paywall.
-    @Published var showPaywall = false
 
     /// All geometry work happens on this worker's serial queue.
     let worker = BuildWorker()
