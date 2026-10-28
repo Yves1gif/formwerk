@@ -6,7 +6,7 @@ struct Inspector: View {
     @ObservedObject var model: EditorModel
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 16) {
             if model.sketch != nil {
                 SketchPanel(model: model)
             } else if let tool = model.tool {
@@ -19,9 +19,9 @@ struct Inspector: View {
                 SectionPanel(model: model)
             }
         }
-        .padding(20)
+        .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .glassPanel(radius: 18)
+        .glassPanel()
     }
 }
 
@@ -32,7 +32,7 @@ struct PanelButtons: View {
     var doneEnabled = true
 
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 8) {
             Button("Cancel", role: .cancel, action: cancel)
                 .buttonStyle(PanelButtonStyle())
                 .keyboardShortcut(.cancelAction)
@@ -53,7 +53,8 @@ struct SketchPanel: View {
     var body: some View {
         if let s = model.sketch {
             VStack(alignment: .leading, spacing: 12) {
-                Text(s.tool.title).font(Theme.title(19, weight: .semibold))
+                Text(s.tool.title).font(Theme.title(Theme.panelTitleSize, weight: .semibold))
+                    .accessibilityAddTraits(.isHeader)
                 Text(s.tool.hint).font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 if s.isNew && s.isEmpty, case .origin(let p, _) = s.planeRef {
                     PickerRow(title: "Plane", selection: Binding(get: { p }, set: { model.setSketchPlane($0) })) {
@@ -63,14 +64,23 @@ struct SketchPanel: View {
                     }
                 }
                 status(s)
-                HStack {
-                    Button { model.sketchUndo() } label: { Image(systemName: "arrow.uturn.backward") }
-                        .disabled(s.undoStack.isEmpty)
-                    Button { model.sketchRedo() } label: { Image(systemName: "arrow.uturn.forward") }
-                        .disabled(s.redoStack.isEmpty)
+                HStack(spacing: 8) {
+                    Button { model.sketchUndo() } label: {
+                        Label("Undo", systemImage: "arrow.uturn.backward").labelStyle(.iconOnly)
+                            .frame(minWidth: 28, minHeight: 28)
+                    }
+                    .disabled(s.undoStack.isEmpty)
+                    .help(Text("Undo"))
+                    Button { model.sketchRedo() } label: {
+                        Label("Redo", systemImage: "arrow.uturn.forward").labelStyle(.iconOnly)
+                            .frame(minWidth: 28, minHeight: 28)
+                    }
+                    .disabled(s.redoStack.isEmpty)
+                    .help(Text("Redo"))
                     Spacer()
                 }
                 .buttonStyle(.bordered)
+                .buttonBorderShape(.capsule)
             }
         }
     }
@@ -78,14 +88,34 @@ struct SketchPanel: View {
     @ViewBuilder
     private func status(_ s: SketchSession) -> some View {
         if let r = s.solve, !r.conflicting.isEmpty {
-            Label("Some constraints contradict each other (red).", systemImage: "exclamationmark.triangle.fill")
-                .font(.callout).foregroundStyle(.red)
+            StatusLabel(text: "Some constraints contradict each other (red).", icon: "exclamationmark.triangle.fill", tint: Theme.problem)
         } else if let r = s.solve, r.isFullyDefined, !s.isEmpty {
-            Label("Fully defined", systemImage: "checkmark.seal.fill").font(.callout).foregroundStyle(.green)
+            StatusLabel(text: "Fully defined", icon: "checkmark.seal.fill", tint: Theme.ready)
         } else if !s.isEmpty {
-            Label("Blue parts can still move. Add dimensions to fix them.", systemImage: "circle.dashed")
-                .font(.callout).foregroundStyle(.blue)
+            StatusLabel(text: "Blue parts can still move. Add dimensions to fix them.", icon: "circle.dashed", tint: Theme.blue)
         }
+    }
+}
+
+/// A coloured icon with readable text: the colour carries the meaning, the text stays high-contrast
+/// (orange or blue body text on glass fails contrast, especially in light mode).
+struct StatusLabel: View {
+    let text: Text
+    let icon: String
+    let tint: Color
+
+    init(text: LocalizedStringKey, icon: String, tint: Color) {
+        self.text = Text(text); self.icon = icon; self.tint = tint
+    }
+
+    init(verbatim: String, icon: String, tint: Color) {
+        self.text = Text(verbatim: verbatim); self.icon = icon; self.tint = tint
+    }
+
+    var body: some View {
+        Label { text.foregroundStyle(.primary) } icon: { Image(systemName: icon).foregroundStyle(tint) }
+            .font(.callout)
+            .fixedSize(horizontal: false, vertical: true)
     }
 }
 
@@ -105,14 +135,17 @@ struct ToolPanel: View {
                     .foregroundStyle(Theme.blue)
                     .frame(width: 36, height: 36)
                     .background(Theme.blue.opacity(0.12), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-                Text(tool.kind.title).font(Theme.title(21, weight: .semibold))
+                    .accessibilityHidden(true)
+                Text(tool.kind.title).font(Theme.title(Theme.panelTitleSize, weight: .semibold))
+                    .lineLimit(2).minimumScaleFactor(0.8)
+                    .accessibilityAddTraits(.isHeader)
                 if tool.editing != nil { Text("(editing)").font(.caption).foregroundStyle(.secondary) }
             }
             Text(tool.kind.hint).font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             fields
             switch tool.status {
-            case .error(let m): Label(m, systemImage: "xmark.octagon.fill").font(.callout).foregroundStyle(.red)
-            case .warning(let m): Label(m, systemImage: "exclamationmark.triangle.fill").font(.callout).foregroundStyle(.orange)
+            case .error(let m): StatusLabel(verbatim: m, icon: "xmark.octagon.fill", tint: Theme.problem)
+            case .warning(let m): StatusLabel(verbatim: m, icon: "exclamationmark.triangle.fill", tint: .orange)
             case .ok: EmptyView()
             }
             if tool.kind == .measure {
@@ -421,25 +454,40 @@ struct SelectionPanel: View {
         header(bodies.count == 1 ? "Body" : "\(bodies.count) bodies", icon: "cube.fill")
         fact("Volume", Format.number(volume / 1000, digits: 2) + " cm³")
         fact("Size", "\(Format.number(box.size.x, digits: 1)) × \(Format.number(box.size.y, digits: 1)) × \(Format.number(box.size.z, digits: 1)) mm")
-        HStack(spacing: 6) {
+        // Swatches: 26 pt dots with a 32 × 44 pt tap area; the current colour gets a ring.
+        let current = ids.first.map { model.design.style($0).colorIndex % max(Palette.bodies.count, 1) }
+        HStack(spacing: 2) {
             ForEach(Palette.bodies.indices, id: \.self) { i in
                 let c = Palette.bodies[i]
                 Button { model.setColor(i, for: ids) } label: {
                     Circle().fill(Color(red: Double(c.x), green: Double(c.y), blue: Double(c.z)))
-                        .frame(width: 22, height: 22)
-                        .overlay(Circle().stroke(Color.primary.opacity(0.25)))
+                        .frame(width: 26, height: 26)
+                        .overlay(Circle().strokeBorder(Color.primary.opacity(0.25)))
+                        .padding(3)
+                        .overlay(Circle().strokeBorder(current == i ? Theme.blue : .clear, lineWidth: 2))
+                        .frame(width: 32, height: Theme.minTouch)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel(Text("Color \(i + 1)"))
+                .accessibilityAddTraits(current == i ? .isSelected : [])
             }
         }
     }
 
     private func header(_ title: LocalizedStringKey, icon: String) -> some View {
-        Label(title, systemImage: icon).font(Theme.title(19, weight: .semibold))
+        Label(title, systemImage: icon).font(Theme.title(Theme.panelTitleSize, weight: .semibold))
+            .accessibilityAddTraits(.isHeader)
     }
 
     private func fact(_ title: LocalizedStringKey, _ value: String) -> some View {
-        HStack { Text(title).foregroundStyle(.secondary); Spacer(); Text(value).font(Theme.number()) }.font(.callout)
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Text(title).foregroundStyle(.secondary)
+            Spacer(minLength: 8)
+            Text(value).font(Theme.number()).lineLimit(1).minimumScaleFactor(0.7)
+        }
+        .font(.callout)
+        .accessibilityElement(children: .combine)
     }
 }
 
@@ -455,14 +503,16 @@ struct SectionPanel: View {
                 HStack {
                     Label("Section", systemImage: "square.split.diagonal").font(.headline)
                     Spacer()
-                    Button("End") { model.toggleSection() }.buttonStyle(.bordered).controlSize(.small)
+                    Button("End") { model.toggleSection() }.buttonStyle(.bordered).buttonBorderShape(.capsule)
                 }
                 Picker("Axis", selection: Binding(get: { s.axis }, set: { model.setSectionAxis($0) })) {
                     Text("X").tag(0); Text("Y").tag(1); Text("Z").tag(2)
                 }
                 .pickerStyle(.segmented)
                 Slider(value: Binding(get: { s.offset }, set: { model.section?.offset = $0 }), in: lo...max(hi, lo + 1))
-                Text(Format.length(s.offset, unit: model.design.unit)).font(.caption.monospacedDigit()).foregroundStyle(.secondary)
+                    .accessibilityLabel(Text("Section"))
+                    .accessibilityValue(Text(Format.length(s.offset, unit: model.design.unit)))
+                Text(Format.length(s.offset, unit: model.design.unit)).font(Theme.number(12)).foregroundStyle(.secondary)
             }
         }
     }

@@ -54,9 +54,9 @@ struct ToolRail: View {
         if horizontal {
             ScrollView(.horizontal, showsIndicators: false) { rail.padding(6) }
                 .fixedSize(horizontal: false, vertical: true)
-                .glassPanel(radius: 18)
+                .glassPanel()
         } else {
-            rail.padding(8).glassPanel(radius: 18)
+            rail.padding(8).glassPanel()
         }
     }
 
@@ -73,18 +73,14 @@ struct RailButton: View {
 
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 3) {
-                Image(systemName: icon).font(.system(size: 19, weight: .medium))
-                    .frame(width: 30, height: 24)
-                Text(title).font(.system(size: 10.5, weight: .semibold)).lineLimit(1).minimumScaleFactor(0.6)
-            }
-            .frame(width: 60, height: 56)
-            .background(active ? Theme.blue : .clear, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .contentShape(Rectangle())
+            RailLabel(title: title, icon: icon)
+                .background(active ? Theme.blue : .clear, in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
         }
         .buttonStyle(.plain)
         .foregroundStyle(active ? Color.white : .primary)
         .help(Text(title))
+        .accessibilityLabel(Text(title))
+        .accessibilityAddTraits(active ? .isSelected : [])
     }
 }
 
@@ -97,17 +93,37 @@ struct RailMenu<Content: View>: View {
         Menu {
             content()
         } label: {
-            VStack(spacing: 3) {
-                Image(systemName: icon).font(.system(size: 19, weight: .medium)).frame(width: 30, height: 24)
-                Text(title).font(.system(size: 10.5, weight: .semibold)).lineLimit(1).minimumScaleFactor(0.6)
-            }
-            .frame(width: 60, height: 56)
-            .contentShape(Rectangle())
+            RailLabel(title: title, icon: icon)
         }
         .menuStyle(.button)
         .buttonStyle(.plain)
         .menuIndicator(.hidden)
         .foregroundStyle(.primary)
+        .help(Text(title))
+        .accessibilityLabel(Text(title))
+    }
+}
+
+/// Icon over a short caption, 60 pt wide. Long words (German, Hindi) may wrap to a second line
+/// instead of shrinking to an unreadable size.
+struct RailLabel: View {
+    let title: LocalizedStringKey
+    let icon: String
+
+    var body: some View {
+        VStack(spacing: 4) {
+            Image(systemName: icon).font(.system(size: 19, weight: .medium))
+                .frame(width: 30, height: 24)
+                .accessibilityHidden(true)
+            Text(title).font(.system(size: 10.5, weight: .semibold))
+                .lineLimit(2).minimumScaleFactor(0.85)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.vertical, 6)
+        .frame(width: 60)
+        .frame(minHeight: 56)
+        .contentShape(Rectangle())
     }
 }
 
@@ -127,21 +143,63 @@ struct SketchToolbar: View {
                         if let key = t.shortcut { button.keyboardShortcut(key, modifiers: []) } else { button }
                     }
                     if s.tool == .polygon {
-                        Stepper(value: Binding(get: { s.polygonSides }, set: { model.sketch?.polygonSides = $0 }), in: 3...24) {
-                            Text("\(s.polygonSides)").font(.caption.monospacedDigit())
-                        }
-                        .frame(width: 58)
-                        .labelsHidden()
+                        PolygonSidesControl(sides: s.polygonSides, horizontal: horizontal) { model.sketch?.polygonSides = $0 }
                     }
             }
             if horizontal {
                 ScrollView(.horizontal, showsIndicators: false) { tools.padding(6) }
                     .fixedSize(horizontal: false, vertical: true)
-                    .glassPanel(radius: 18)
+                    .glassPanel()
             } else {
-                tools.padding(8).glassPanel(radius: 18)
+                tools.padding(8).glassPanel()
             }
         }
+    }
+}
+
+/// Number of polygon sides, sized for the 60 pt rail: − / count / +, each 44 pt tall.
+/// (A system Stepper is 94 pt wide and got clipped, and its number was hidden.)
+struct PolygonSidesControl: View {
+    let sides: Int
+    var horizontal = false
+    let set: (Int) -> Void
+
+    var body: some View {
+        let layout = horizontal ? AnyLayout(HStackLayout(spacing: 0)) : AnyLayout(VStackLayout(spacing: 0))
+        layout {
+            stepButton("plus", label: "More sides", enabled: sides < 24) { set(min(sides + 1, 24)) }
+            VStack(spacing: 0) {
+                Text("\(sides)").font(Theme.number(17, weight: .semibold))
+                Text("Sides").font(.system(size: 10.5, weight: .semibold)).foregroundStyle(.secondary)
+                    .lineLimit(1).minimumScaleFactor(0.7)
+            }
+            .frame(width: 56)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(Text("Sides"))
+            .accessibilityValue(Text("\(sides)"))
+            .accessibilityAdjustableAction { dir in
+                switch dir {
+                case .increment: set(min(sides + 1, 24))
+                case .decrement: set(max(sides - 1, 3))
+                @unknown default: break
+                }
+            }
+            stepButton("minus", label: "Fewer sides", enabled: sides > 3) { set(max(sides - 1, 3)) }
+        }
+        .padding(.vertical, 2)
+        .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
+    }
+
+    private func stepButton(_ icon: String, label: LocalizedStringKey, enabled: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: icon).font(.system(size: 15, weight: .bold))
+                .frame(width: horizontal ? Theme.minTouch : 56, height: horizontal ? 56 : Theme.minTouch)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(!enabled)
+        .opacity(enabled ? 1 : 0.35)
+        .accessibilityLabel(Text(label))
     }
 }
 
@@ -163,10 +221,10 @@ struct ContextBar: View {
             .padding(6)
             // Hug the buttons when they fit; scroll sideways on narrow screens (iPhone).
             ViewThatFits(in: .horizontal) {
-                row.fixedSize().glassPanel(radius: 28)
+                row.fixedSize().glassPanel(radius: Theme.Radius.bar)
                 ScrollView(.horizontal, showsIndicators: false) { row }
                     .frame(maxWidth: 820)
-                    .glassPanel(radius: 28)
+                    .glassPanel(radius: Theme.Radius.bar)
             }
         }
     }

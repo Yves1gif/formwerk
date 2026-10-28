@@ -87,6 +87,10 @@ struct SketchSession {
     var sketch: Sketch
     var solve: SketchSolver.Result?
     var tool: SketchTool = .line
+    /// The tool before the current one (Pencil squeeze / double-tap go back to it).
+    var previousTool: SketchTool?
+    /// The last drawing tool, so Space and the Pencil can return to it from Select.
+    var lastDrawTool: SketchTool = .line
     /// Points/positions placed so far by the current drawing action.
     var clicks: [SketchSnap] = []
     /// Line chains continue from this point.

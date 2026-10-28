@@ -478,7 +478,10 @@ Every phase ends with something you can try on the iPad. Each phase gets an entr
 
 ---
 
-## 12b. Next version (1.1) backlog
+## 12a. Money (decided 2026-10-28)
+Free download + one-time Formwerk Pro (CHF 10, no subscription). Details and reasons: BUSINESS-PLAN.md and PROJECT-LOG 2026-10-28.
+
+## 12b. Next version backlog
 - **AI assistant, bring your own account:**
   - The user signs in with the AI service they choose (Claude, ChatGPT, Gemini, …) using their own key or account.
   - They describe a part ("wall hook for a 20 mm rail, 3 mm screw holes") and the AI builds it as normal, editable timeline steps (sketch, extrude, fillet…), never as a dead mesh.

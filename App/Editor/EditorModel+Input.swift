@@ -2,8 +2,9 @@ import simd
 import SwiftUI
 
 extension EditorModel: ViewportInput {
-    func viewportTap(_ p: CGPoint, extend: Bool) {
-        if sketch != nil { sketchTap(p, extend: extend); return }
+    func viewportTap(_ p: CGPoint, extend: Bool, touch: ViewportTouch) {
+        if touch == .pencil { PencilDrawing.pencilSeen = true }
+        if sketch != nil { sketchTap(p, extend: extend, touch: touch); return }
         if let t = tool { toolTap(t, at: p, extend: extend); return }
         selectionTap(p, extend: extend)
     }
@@ -188,8 +189,9 @@ extension EditorModel: ViewportInput {
 
     // MARK: - Drags
 
-    func viewportDragBegan(_ p: CGPoint, pencil: Bool) -> Bool {
-        if sketch != nil { return sketchDragBegan(p, pencil: pencil) }
+    func viewportDragBegan(_ p: CGPoint, touch: ViewportTouch) -> Bool {
+        if touch == .pencil { PencilDrawing.pencilSeen = true }
+        if sketch != nil { return sketchDragBegan(p, touch: touch) }
         guard let renderer else { return false }
         for h in handles {
             guard let tip = renderer.camera.project(handleTip(h), size: renderer.viewSize) else { continue }
@@ -234,11 +236,72 @@ extension EditorModel: ViewportInput {
         if sketch != nil { sketchRedo() } else { redo() }
     }
 
-    func viewportPencilDoubleTap() {
-        // Pencil double-tap switches between drawing lines and selecting.
+    func viewportPencil(_ action: PencilAction) {
+        // Double-tap switches between drawing and selecting; squeeze goes back to the previous tool.
+        PencilDrawing.pencilSeen = true
         guard let s = sketch else { return }
-        setSketchTool(s.tool == .select ? .line : .select)
+        switch action {
+        case .toggleSelect: setSketchTool(s.tool == .select ? s.lastDrawTool : .select)
+        case .previousTool: setSketchTool(s.previousTool ?? (s.tool == .select ? s.lastDrawTool : .select))
+        }
     }
+
+    // MARK: - Right-click / long press
+
+    func viewportContextMenu(at p: CGPoint) -> [ViewportMenuItem] {
+        if var s = sketch {
+            // Sketch actions show in the context bar.
+            guard s.editingDimension == nil, let item = hitSketchItem(p) else { return [] }
+            if !s.selected.contains(item) { s.selected = [item]; sketch = s }
+            return []
+        }
+        guard tool == nil, let renderer else { return [] }
+        measurement = nil
+        guard let hit = sketchHit(p) ?? renderer.pick(at: p).flatMap({ selection(for: $0) }) else {
+            selection = []
+            return []
+        }
+        if !selection.contains(hit) { selection = [hit] }
+        return contextActions()
+    }
+
+    /// The same actions as the context bar, as plain strings for the Mac's menu.
+    private func contextActions() -> [ViewportMenuItem] {
+        var out: [ViewportMenuItem] = []
+        func add(_ title: String, _ icon: String, _ run: @escaping () -> Void) { out.append(ViewportMenuItem(title: title, icon: icon, run: run)) }
+        func addTool(_ k: ToolKind) { add(localizedName(k), k.icon) { self.start(k) } }
+        if let sid = selectedRegions.first?.0 {
+            addTool(.extrude); addTool(.revolve)
+            add(String(localized: "Edit Sketch"), "pencil") { self.editSketch(sid) }
+            return out
+        }
+        if case .sketchLine(let sid, _)? = selection.first {
+            add(String(localized: "Edit Sketch"), "pencil") { self.editSketch(sid) }
+            return out
+        }
+        if !selectedEdges.isEmpty { addTool(.fillet); addTool(.chamfer) }
+        if let (body, face) = selectedFaces.first {
+            if face.isPlanar {
+                add(String(localized: "Sketch"), "pencil.and.outline") { self.startSketch() }
+                addTool(.pushPull); addTool(.hole); addTool(.text)
+                add(String(localized: "Lay flat"), "arrow.down.to.line") { self.layFlat() }
+            }
+            add(String(localized: "Round edges"), ToolKind.fillet.icon) { self.start(.fillet) }
+            addTool(.shell)
+            let id = body.id
+            add(String(localized: "Select Body"), "cube.fill") { self.selection = [.body(id)] }
+        }
+        let bodies = selection.compactMap { if case .body(let b) = $0 { return b } else { return nil } }
+        if !bodies.isEmpty {
+            addTool(.move); addTool(.mirror); addTool(.pattern); addTool(.shell)
+            if bodies.count >= 2 { addTool(.combine) }
+            addTool(.split)
+            add(String(localized: "Delete"), "trash") { self.deleteSelectedBodies() }
+        }
+        return out
+    }
+
+    // MARK: - Keyboard
 
     func viewportKey(_ key: ViewportKey) -> Bool {
         switch key {
@@ -258,6 +321,80 @@ extension EditorModel: ViewportInput {
             if tool != nil { applyTool(); return true }
             if sketch != nil { finishSketch(); return true }
             return false
+        case .space:
+            return repeatLastTool()
+        case .arrow(let dx, let dy):
+            orbitStep(dx: dx, dy: dy)
+            return true
+        case .character(let c):
+            return letterKey(c)
         }
+    }
+
+    /// Single-letter tools (BAUPLAN 6.3).
+    private func letterKey(_ c: Character) -> Bool {
+        if sketch?.editingDimension != nil { return false }
+        // Drawing keys: inside a sketch the sketch toolbar answers them; outside they open a new sketch.
+        if let t = SketchTool.allCases.first(where: { $0.shortcut?.character == c }) {
+            guard sketch == nil, t != .select, t != .dimension else { return false }
+            if tool != nil { cancelTool() }
+            startSketch()
+            setSketchTool(t)
+            return true
+        }
+        switch c {
+        case "e": start(.extrude)
+        case "f":
+            // Fillet the selected edges (or a face's edges); with nothing to round, fit the view.
+            if sketch == nil && (!selectedEdges.isEmpty || !selectedFaces.isEmpty) { start(.fillet) } else { fitView() }
+        case "h": start(.hole)
+        case "m": start(.measure)
+        default: return false  // "k" (new sketch) belongs to the tool rail's Sketch button
+        }
+        return true
+    }
+
+    /// Space: back to the last drawing tool in a sketch, or the tool of the newest timeline step.
+    private func repeatLastTool() -> Bool {
+        if let s = sketch {
+            guard s.editingDimension == nil else { return false }
+            if s.tool == .select { setSketchTool(s.lastDrawTool) }
+            return true
+        }
+        guard tool == nil, let f = design.features.last(where: { $0.kind != .deleteBody && $0.kind != .importBody }) else { return false }
+        if f.kind == .sketch { startSketch(); return true }
+        guard let k = toolKind(for: f) else { return false }
+        start(k)
+        return true
+    }
+
+    private func toolKind(for f: Feature) -> ToolKind? {
+        switch f.operation {
+        case .extrude: .extrude
+        case .revolve: .revolve
+        case .pushPull: .pushPull
+        case .fillet: .fillet
+        case .chamfer: .chamfer
+        case .shell: .shell
+        case .hole: .hole
+        case .transform: .move
+        case .mirror: .mirror
+        case .pattern: .pattern
+        case .text: .text
+        case .boolean: .combine
+        case .split: .split
+        case .primitive(let p): p.kind == .box ? .box : .cylinder
+        default: nil
+        }
+    }
+
+    /// Arrow keys turn the view in 15° steps, the same way as dragging.
+    private func orbitStep(dx: Int, dy: Int) {
+        guard let renderer else { return }
+        var cam = renderer.camera
+        let step = Double.pi / 12
+        cam.yaw -= Double(dx) * step
+        cam.pitch = min(max(cam.pitch + Double(dy) * step, -Camera.maxPitch), Camera.maxPitch)
+        renderer.animate(to: cam, duration: 0.15)
     }
 }

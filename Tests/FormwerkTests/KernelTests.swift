@@ -6,9 +6,10 @@ final class KernelTests: XCTestCase {
         XCTAssertEqual(state.bodies.count, 1)
         XCTAssertTrue(state.statuses.values.allSatisfy { $0 == .ok })
         let v = state.bodies[0].shape.properties.volume
-        // 60 × 40 × 30 box, hollowed with 1.6 mm walls, open at the top
-        let inner = (60 - 3.2) * (40 - 3.2) * (30 - 1.6)
-        XCTAssertEqual(v, 60 * 40 * 30 - inner, accuracy: 1)
+        // 60 × 40 × 30 box with 6 mm rounded corners, hollowed with 2 mm walls, open at the top
+        let outer = 60.0 * 40 - (4 - .pi) * 36
+        let inner = 56.0 * 36 - (4 - .pi) * 16
+        XCTAssertEqual(v, outer * 30 - inner * 28, accuracy: 1)
         XCTAssertTrue(state.bodies[0].shape.isValidSolid)
     }
 
@@ -33,6 +34,7 @@ final class KernelTests: XCTestCase {
 
     func testReferencesSurviveAParameterChange() throws {
         var d = Templates.box()
+        d.features.removeSubrange(2...)  // keep sketch + extrude: the template's own rounded corners can't take a fillet
         // add a fillet on the outer vertical edges, then make the box wider
         let state = ModelBuilder().build(d)
         let body = state.bodies[0]

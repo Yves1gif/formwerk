@@ -11,7 +11,7 @@ options:
 settings:
   base:
     SWIFT_VERSION: "5.0"
-    MARKETING_VERSION: "1.0"
+    MARKETING_VERSION: "1.1"
     CURRENT_PROJECT_VERSION: "1"
     DEVELOPMENT_TEAM: HC67GN5D2X
     CODE_SIGN_STYLE: Automatic
@@ -50,7 +50,7 @@ targets:
       - path: App
       - path: Sources
       - path: Resources
-        excludes: ["Info.plist", "*.entitlements"]
+        excludes: ["Info.plist", "*.entitlements", "*.storekit"]
     dependencies:
       - framework: Vendor/OCCT/OCCT.xcframework
         embed: false
@@ -63,6 +63,12 @@ targets:
         ITSAppUsesNonExemptEncryption: false
         LSSupportsOpeningDocumentsInPlace: true
         UISupportsDocumentBrowser: true
+        # iCloud Drive gets a "Formwerk" folder; the document browser / save panel lets people pick any other place.
+        NSUbiquitousContainers:
+          iCloud.com.yvesf.formwerk:
+            NSUbiquitousContainerIsDocumentScopePublic: true
+            NSUbiquitousContainerName: Formwerk
+            NSUbiquitousContainerSupportedFolderLevels: Any
         UIRequiresFullScreen: false
         UILaunchScreen:
           UIColorName: LaunchBackground
@@ -107,6 +113,7 @@ targets:
         SYSTEM_HEADER_SEARCH_PATHS: ["$(SRCROOT)/Vendor/OCCT/include"]
         OTHER_LDFLAGS: ["-lc++"]
         CODE_SIGN_ENTITLEMENTS[sdk=macosx*]: Resources/Formwerk.entitlements
+        CODE_SIGN_ENTITLEMENTS[sdk=iphone*]: Resources/Formwerk-iOS.entitlements
         ENABLE_HARDENED_RUNTIME[sdk=macosx*]: "YES"
         ARCHS[sdk=macosx*]: arm64
         LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]: ["$(inherited)", "@executable_path/../Frameworks"]
@@ -160,6 +167,8 @@ schemes:
       targets:
         Formwerk: all
         FormwerkUITests: [test]
+    run:
+      storeKitConfiguration: Resources/Formwerk.storekit
     test:
       targets: [FormwerkUITests]
   Formwerk:
@@ -167,5 +176,7 @@ schemes:
       targets:
         Formwerk: all
         FormwerkTests: [test]
+    run:
+      storeKitConfiguration: Resources/Formwerk.storekit
     test:
       targets: [FormwerkTests]

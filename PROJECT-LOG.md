@@ -106,3 +106,31 @@ See BAUPLAN.md §13: open source yes/no, tip jar timing, minimum iPad, final nam
 - **Store page for the Duo:** texts and a featuring nomination draft are in `deploy/appstore/iphone-duo.md`. Duo screenshots follow once the Duo simulator exists (Xcode 27.1).
 - 4 new strings in all 15 languages (310 total). Checked en/de/ar on the iPhone 17 Pro and iPad 13" simulators. New screenshot mode `-formwerkShot unfold`.
 - **Next version backlog:** AI assistant with the user's own AI account (BAUPLAN §12b).
+
+## 2026-10-28: Version 1.1, Pro, input, iCloud, design pass, business plan
+User: "develop it to completion, perfect it… how do I make a profit? 10 CHF one time?", "prepare all versions, don't test, my Mac is overloaded, only build", "design and perfect every object", "Mac, iPad and iPhone Duo; home screen; storage in iCloud or another place by choice; draw with Apple Pencil, finger, mouse, keyboard", "business plan, marketing, fair prices, Apple nomination".
+- **Xcode 27.1 is installed now.** That lifts the iPhone Duo blocker from 2026-10-23: builds use the iOS 27 SDK, so the Duo's inner screen gets the real full-size layout and is no longer shown at old iPhone proportions with black bars.
+- **Pricing (BUSINESS-PLAN.md):** free download plus a one-time **Formwerk Pro** in-app purchase for CHF 10 (`com.yvesf.formwerk.pro`, Family Sharing). No subscription, no ads, no server (StoreKit 2, checked on the device).
+  - Rejected a 10 CHF upfront price: 90–95 % fewer downloads, and 1.0 was submitted as free.
+  - Rejected a subscription: it would break the fairness story against Shapr3D (~300 USD a year).
+  - **Free:** everything needed to model and print, plus STL export.
+  - **Pro:** 3MF, STEP, OBJ and USDZ export; STEP import; AR; auto-orient; Pattern, Hollow and Split.
+  - Designs that already use Pro steps still rebuild and stay editable; only *starting* a Pro tool is gated.
+  - Section view is not gated (no clean gate).
+  - **Fairness for early users:** anyone whose original download is a build before 202610280000 (production App Store only) gets Pro free, because 1.0 had every export free (`AppTransaction.originalAppVersion`).
+  - Apple's rating prompt comes after the 3rd successful export.
+  - A StoreKit test file (`Resources/Formwerk.storekit`) is in the run scheme.
+- **Input (BAUPLAN §6.2/6.3):**
+  - **Pencil:** "Only Apple Pencil draws" (auto/on/off). Double-tap and squeeze follow the user's system setting. Hover works. Hold a finger and tap with the Pencil to add to the selection.
+  - **Finger:** long-press selects.
+  - **Mouse:** right-click menu on the Mac. Mouse presets: Formwerk, Fusion 360, Blender, SolidWorks.
+  - **Keyboard:** L/R/C/A/O/P start a sketch tool, E/H/M start a tool, F = fillet or fit, Space repeats, the arrow keys turn the view.
+  - Settings live in Mac Settings → Input and on iPad/Duo under View → Pencil, Mouse & Keyboard.
+- **Storage:** iCloud Documents container `iCloud.com.yvesf.formwerk`, so iCloud Drive gets a "Formwerk" folder. The document browser (iPad/Duo) and the save panel (Mac) still let people choose any other place (On my iPad, Dropbox, USB…). Why: the built-in browser already *is* the home screen with recent files and templates, so a second home screen would only duplicate it.
+- **Design pass:**
+  - All templates are now real, printable parts: box with 2 mm walls and rounded corners; keychain with a reinforced ring; bracket with 45° gussets and countersunk screw holes; pot with drainage holes and a saucer; phone stand at 65° with a cable gap for phones up to 12 mm thick; hook with 2 countersunk screws.
+  - New templates: hex coaster and cable comb.
+  - UI: tap targets are ≥ 44 pt; one set of corner-radius values; Swiss/German long words wrap instead of shrinking; dark-mode contrast for warning colours; VoiceOver labels and announcements; the polygon sides control works again.
+- 375 strings × 15 languages.
+- App Store texts for all 16 locales are in `deploy/appstore/metadata/`. Keywords like "bambu"/"prusa" may be rejected as trademarks (2.3.7).
+- Built only, not tested on the user's request (the Mac is overloaded). The self-test and unit tests still have to run (the box volume test was updated for the new box).

@@ -17,7 +17,7 @@ enum SelfTest {
             var log = "Formwerk self-test \(Date())\n"
             func note(_ s: String) { log += s + "\n"; print("SELFTEST " + s) }
 
-            for (name, design) in [("keychain", Templates.keychain()), ("bracket", Templates.wallBracket()), ("pot", Templates.plantPot()), ("stand", Templates.phoneStand()), ("hook", Templates.wallHook()), ("box", Templates.box())] {
+            for (name, design) in [("keychain", Templates.keychain()), ("bracket", Templates.wallBracket()), ("pot", Templates.plantPot()), ("stand", Templates.phoneStand()), ("hook", Templates.wallHook()), ("box", Templates.box()), ("coaster", Templates.hexCoaster()), ("comb", Templates.cableComb())] {
                 let doc = FormwerkDocument(design: design)
                 let model = EditorModel(document: doc)
                 await waitForBuild(model)

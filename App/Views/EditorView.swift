@@ -19,8 +19,10 @@ struct EditorView: View {
     @State private var startTutorialAfterWelcome = false
     @State private var openAnywayOnSmallPhone = false
     @AppStorage("tutorialDone") private var tutorialDone = false
+    @ObservedObject private var pro = ProStore.shared
     #if os(iOS)
     @State private var arFile: ExportedFile?
+    @State private var showInputSettings = false
     #endif
 
     init(document: FormwerkDocument) {
@@ -96,10 +98,25 @@ struct EditorView: View {
             }
         }
         #if os(iOS)
+        .sheet(isPresented: $showInputSettings) {
+            NavigationStack {
+                InputSettingsView()
+                    .toolbar { Button("Done") { showInputSettings = false } }
+            }
+        }
         .fullScreenCover(item: $arFile) { f in ARQuickLookView(url: f.url).ignoresSafeArea() }
         #endif
-        .fileImporter(isPresented: $showImport, allowedContentTypes: UTType.stepFiles) { result in
+        .sheet(isPresented: $model.showPaywall) { ProView(model: model) }
+        // STEP import is part of Formwerk Pro: without it, the paywall opens instead of the file picker.
+        .fileImporter(isPresented: Binding(get: { showImport && pro.isPro }, set: { showImport = $0 }),
+                      allowedContentTypes: UTType.stepFiles) { result in
             if case .success(let url) = result { model.importSTEP(url) }
+        }
+        .onChange(of: showImport) { _, wants in
+            if wants && !pro.isPro {
+                showImport = false
+                model.showPaywall = true
+            }
         }
         #if os(iOS)
         .toolbarRole(.editor)
@@ -226,9 +243,13 @@ struct EditorView: View {
                 Button("Tutorial", systemImage: "graduationcap") { withAnimation(.snappy) { tutorialStep = .sketch } }
                 Button("Help", systemImage: "questionmark.circle") { showWelcome = true }
                 #if os(iOS)
+                Button("Pencil, Mouse & Keyboard", systemImage: "applepencil") { showInputSettings = true }
                 Divider()
-                Button("View in AR", systemImage: "arkit") {
+                Button {
                     model.makeUSDZ { url in if let url { arFile = ExportedFile(url: url, format: .usdz) } }
+                } label: {
+                    Label("View in AR", systemImage: "arkit")
+                    if !pro.isPro { Text("Formwerk Pro") }
                 }
                 #endif
             } label: {
@@ -266,12 +287,22 @@ struct EditorView: View {
 struct ToastView: View {
     let toast: Toast
     var body: some View {
-        Label(toast.text, systemImage: toast.kind == .error ? "exclamationmark.triangle.fill" : "info.circle.fill")
-            .font(.callout)
-            .padding(.horizontal, 14).padding(.vertical, 9)
-            .background(.regularMaterial, in: Capsule())
-            .foregroundStyle(toast.kind == .error ? Color.red : Color.primary)
-            .shadow(color: .black.opacity(0.12), radius: 8, y: 2)
+        // Coloured icon, primary text: red body text on glass is hard to read, and long
+        // messages wrap inside a rounded rectangle instead of a stretched capsule.
+        Label {
+            Text(toast.text).foregroundStyle(.primary).fixedSize(horizontal: false, vertical: true)
+        } icon: {
+            Image(systemName: toast.kind == .error ? "exclamationmark.triangle.fill" : "info.circle.fill")
+                .foregroundStyle(toast.kind == .error ? Theme.problem : Theme.blue)
+        }
+        .font(.callout)
+        .padding(.horizontal, 16).padding(.vertical, 12)
+        .frame(maxWidth: 520)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: Theme.Radius.panel, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: Theme.Radius.panel, style: .continuous).strokeBorder(Color.primary.opacity(0.08)))
+        .shadow(color: .black.opacity(0.12), radius: 8, y: 2)
+        .accessibilityElement(children: .combine)
+        .onAppear { AccessibilityNotification.Announcement(toast.text).post() }
     }
 }
 
@@ -279,29 +310,39 @@ struct ToastView: View {
 struct EmptyDesignCard: View {
     @ObservedObject var model: EditorModel
     @Binding var showImport: Bool
+    @ObservedObject private var pro = ProStore.shared
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("What are you making?").font(Theme.title(26))
-            Text("Start with a sketch on the ground, or drop in a basic shape and change it later.")
-                .font(.body).foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-            HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("What are you making?").font(Theme.title(26))
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityAddTraits(.isHeader)
+                Text("Start with a sketch on the ground, or drop in a basic shape and change it later.")
+                    .font(.body).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            HStack(spacing: 8) {
                 startButton("Sketch", icon: "pencil.and.outline", prominent: true) { model.startSketch() }
                 startButton("Box", icon: "cube") { model.start(.box) }
                 startButton("Import STEP", icon: "square.and.arrow.down") { showImport = true }
+                    .overlay(alignment: .topTrailing) { if !pro.isPro { ProBadge().padding(8) } }
             }
         }
         .frame(maxWidth: 500)
-        .glassPanel(radius: 22, padding: 28)
+        .glassPanel(radius: Theme.Radius.card, padding: 24)
     }
 
     private func startButton(_ title: LocalizedStringKey, icon: String, prominent: Bool = false, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             VStack(spacing: 8) {
                 Image(systemName: icon).font(.system(size: 26, weight: .medium))
-                Text(title).font(.callout.weight(.semibold)).lineLimit(1).minimumScaleFactor(0.7)
+                    .accessibilityHidden(true)
+                Text(title).font(.callout.weight(.semibold))
+                    .lineLimit(2).minimumScaleFactor(0.85)
+                    .multilineTextAlignment(.center)
             }
+            .padding(.horizontal, 8).padding(.vertical, 16)
             .frame(maxWidth: .infinity, minHeight: 96)
             .background(prominent ? Theme.blue : Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
             .foregroundStyle(prominent ? Color.white : Color.primary)
@@ -328,12 +369,15 @@ struct SketchTopBar: View {
     private func bar(_ s: SketchSession, full: Bool) -> some View {
         HStack(spacing: 12) {
             Image(systemName: "pencil.and.outline").foregroundStyle(Theme.blue)
+                .accessibilityHidden(true)
             if full {
                 Text(s.isNew ? "New Sketch" : "Edit Sketch").font(Theme.title(17, weight: .semibold))
+                    .accessibilityAddTraits(.isHeader)
             }
             Text("\(s.regions.count) closed areas")
                 .font(.footnote.weight(.semibold))
-                .padding(.horizontal, 10).padding(.vertical, 5)
+                .monospacedDigit()
+                .padding(.horizontal, 10).padding(.vertical, 6)
                 .background(Theme.blue.opacity(0.12), in: Capsule())
                 .foregroundStyle(Theme.blue)
                 .lineLimit(1)
@@ -344,7 +388,7 @@ struct SketchTopBar: View {
                 .keyboardShortcut(.return, modifiers: .command)
         }
         .fixedSize()
-        .padding(.leading, 18).padding(.trailing, 6).padding(.vertical, 6)
-        .glassPanel(radius: 26)
+        .padding(.leading, 16).padding(.trailing, 6).padding(.vertical, 6)
+        .glassPanel(radius: Theme.Radius.bar)
     }
 }

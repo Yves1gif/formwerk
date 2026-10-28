@@ -35,7 +35,13 @@ struct FormwerkApp: App {
         #endif
 
         #if os(macOS)
-        Settings { SettingsView() }
+        Settings {
+            TabView {
+                InputSettingsView().tabItem { Label("Input", systemImage: "keyboard") }
+                SettingsView().tabItem { Label("About", systemImage: "info.circle") }
+            }
+            .frame(width: 480)
+        }
         #endif
     }
 
@@ -48,7 +54,7 @@ struct FormwerkApp: App {
 }
 
 enum TemplateKind: String, CaseIterable, Identifiable {
-    case keychain, box, bracket, pot, stand, hook
+    case keychain, box, bracket, pot, stand, hook, coaster, comb
     var id: String { rawValue }
 
     var title: LocalizedStringKey {
@@ -59,6 +65,8 @@ enum TemplateKind: String, CaseIterable, Identifiable {
         case .pot: "Plant pot"
         case .stand: "Phone stand"
         case .hook: "Wall hook"
+        case .coaster: "Hex coaster"
+        case .comb: "Cable comb"
         }
     }
 
@@ -70,6 +78,8 @@ enum TemplateKind: String, CaseIterable, Identifiable {
         case .pot: Templates.plantPot()
         case .stand: Templates.phoneStand()
         case .hook: Templates.wallHook()
+        case .coaster: Templates.hexCoaster()
+        case .comb: Templates.cableComb()
         }
     }
 }

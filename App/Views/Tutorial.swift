@@ -18,6 +18,20 @@ enum TutorialStep: Int, CaseIterable {
         }
     }
 
+    /// The title as a resource, for VoiceOver announcements.
+    var titleResource: LocalizedStringResource {
+        switch self {
+        case .sketch: "Start a sketch"
+        case .rectangle: "Draw a rectangle"
+        case .finishSketch: "Finish the sketch"
+        case .extrude: "Make it solid"
+        case .height: "Set the height"
+        case .fillet: "Round an edge"
+        case .print: "Get it ready to print"
+        case .done: "You made your first part!"
+        }
+    }
+
     var text: LocalizedStringKey {
         switch self {
         case .sketch: "Tap Sketch to start. You will draw on the ground."
@@ -67,36 +81,63 @@ struct TutorialCoach: View {
     var body: some View {
         if let s = step {
             let total = TutorialStep.allCases.count - 1
-            HStack(alignment: .top, spacing: 14) {
+            let tint = s == .done ? Theme.ready : Theme.blue
+            HStack(alignment: .top, spacing: 16) {
                 Image(systemName: s.icon)
                     .font(.system(size: 20, weight: .semibold))
-                    .foregroundStyle(s == .done ? Theme.ready : Theme.blue)
-                    .frame(width: 42, height: 42)
-                    .background((s == .done ? Theme.ready : Theme.blue).opacity(0.12), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                VStack(alignment: .leading, spacing: 4) {
+                    .foregroundStyle(tint)
+                    .frame(width: 44, height: 44)
+                    .background(tint.opacity(0.12), in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 8) {
                     if s != .done {
-                        Text("Step \(s.rawValue + 1) of \(total)")
-                            .font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+                        HStack(spacing: 8) {
+                            Text("Step \(s.rawValue + 1) of \(total)")
+                                .font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+                                .monospacedDigit()
+                            progress(current: s.rawValue, total: total)
+                        }
                     }
-                    Text(s.title).font(Theme.title(18, weight: .semibold))
-                    Text(s.text).font(.subheadline).foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                Spacer(minLength: 8)
-                if s == .done {
-                    Button("Finish") { finish() }.buttonStyle(PillButtonStyle(prominent: true))
-                } else {
-                    Button("Skip tutorial") { finish() }.buttonStyle(PillButtonStyle())
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(s.title).font(Theme.title(Theme.panelTitleSize, weight: .semibold))
+                            .fixedSize(horizontal: false, vertical: true)
+                            .accessibilityAddTraits(.isHeader)
+                        Text(s.text).font(.subheadline).foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    // Buttons under the text: long translations ("Anleitung überspringen") no longer squeeze it.
+                    HStack {
+                        Spacer(minLength: 0)
+                        if s == .done {
+                            Button("Finish") { finish() }.buttonStyle(PillButtonStyle(prominent: true))
+                        } else {
+                            Button("Skip tutorial") { finish() }.buttonStyle(PillButtonStyle())
+                        }
+                    }
                 }
             }
             .padding(16)
             .frame(maxWidth: 520)
-            .glassPanel(radius: 20)
+            .glassPanel(radius: Theme.Radius.card)
+            .accessibilityElement(children: .contain)
             .transition(.move(edge: .top).combined(with: .opacity))
             // Re-check the current step whenever the editor changes.
             .onReceive(model.objectWillChange.receive(on: DispatchQueue.main)) { _ in advanceIfDone() }
             .onChange(of: printShown) { _, _ in advanceIfDone() }
         }
+    }
+
+    /// One short bar per step: done steps filled, the current one in blue.
+    private func progress(current: Int, total: Int) -> some View {
+        HStack(spacing: 3) {
+            ForEach(0..<total, id: \.self) { i in
+                Capsule()
+                    .fill(i <= current ? Theme.blue : Color.primary.opacity(0.15))
+                    .opacity(i < current ? 0.45 : 1)
+                    .frame(width: i == current ? 16 : 8, height: 4)
+            }
+        }
+        .accessibilityHidden(true)
     }
 
     private func advanceIfDone() {
@@ -105,7 +146,11 @@ struct TutorialCoach: View {
         while s != .done, s.isDone(model, printShown: printShown), let next = TutorialStep(rawValue: s.rawValue + 1) {
             s = next
         }
-        if s != step { withAnimation(.snappy) { step = s } }
+        if s != step {
+            withAnimation(.snappy) { step = s }
+            // VoiceOver users hear the next instruction without hunting for the card.
+            AccessibilityNotification.Announcement(String(localized: s.titleResource)).post()
+        }
     }
 
     private func finish() {

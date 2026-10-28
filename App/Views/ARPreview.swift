@@ -3,6 +3,7 @@ import SwiftUI
 extension EditorModel {
     /// Makes a USDZ of the visible bodies and hands back its URL.
     func makeUSDZ(completion: @escaping (URL?) -> Void) {
+        guard ProStore.shared.requirePro(.arView, else: { showPaywall = true }) else { completion(nil); return }
         let bodies = output.bodies.filter { !design.style($0.id).hidden }
         guard !bodies.isEmpty else { show(String(localized: "There is nothing to export yet.")); completion(nil); return }
         let styles = bodies.map { design.style($0.id) }

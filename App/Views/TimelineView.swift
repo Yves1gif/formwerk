@@ -15,7 +15,7 @@ struct TimelineView: View {
                             chip(f).id(f.id)
                         }
                     }
-                    .padding(6)
+                    .padding(.horizontal, 6)
                 }
                 .onChange(of: features.count) { _, _ in
                     if let last = features.last { withAnimation { proxy.scrollTo(last.id, anchor: .trailing) } }
@@ -23,38 +23,67 @@ struct TimelineView: View {
             }
             .frame(maxWidth: 900)
             .fixedSize(horizontal: false, vertical: true)
-            .glassPanel(radius: 24)
+            .glassPanel(radius: Theme.Radius.bar)
         }
     }
 
     private func chip(_ f: Feature) -> some View {
         let status = model.output.statuses[f.id] ?? .ok
         let editing = model.tool?.editing == f.id || (model.sketch?.featureID == f.id && model.sketch?.isNew == false)
-        let tint: Color = switch status {
-        case .error: .red
+        // Text stays primary for contrast; the status shows as a coloured badge and a tinted outline.
+        let tint: Color? = switch status {
+        case .error: Theme.problem
         case .warning: .orange
-        case .ok: .primary
+        case .ok: nil
         }
         return Button { model.editFeature(f.id) } label: {
-            HStack(spacing: 5) {
+            HStack(spacing: 6) {
                 Image(systemName: icon(f)).font(.caption.weight(.semibold))
+                    .accessibilityHidden(true)
                 Text(displayName(f)).font(.caption.weight(.medium)).lineLimit(1)
-                if case .error = status { Image(systemName: "exclamationmark.circle.fill").font(.caption2) }
-                if case .warning = status { Image(systemName: "exclamationmark.triangle.fill").font(.caption2) }
+                if case .error = status {
+                    Image(systemName: "exclamationmark.circle.fill").font(.caption).foregroundStyle(Theme.problem)
+                        .accessibilityHidden(true)
+                }
+                if case .warning = status {
+                    Image(systemName: "exclamationmark.triangle.fill").font(.caption).foregroundStyle(.orange)
+                        .accessibilityHidden(true)
+                }
             }
-            .padding(.horizontal, 12).padding(.vertical, 8)
+            .padding(.horizontal, 12)
+            .frame(minHeight: 36)
             .background(editing ? Theme.blue.opacity(0.18) : Color.primary.opacity(0.06), in: Capsule())
-            .foregroundStyle(tint)
-            .opacity(f.suppressed ? 0.4 : 1)
+            .overlay(Capsule().strokeBorder(tint?.opacity(0.6) ?? (editing ? Theme.blue.opacity(0.6) : .clear), lineWidth: 1.5))
+            .foregroundStyle(.primary)
+            .opacity(f.suppressed ? 0.45 : 1)
+            // 36 pt capsule, 44 pt tap area.
+            .padding(.vertical, 4)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .help(status.message.map { Text($0) } ?? Text(displayName(f)))
+        .accessibilityLabel(Text(displayName(f)))
+        .accessibilityValue(accessibilityStatus(f, status))
+        .accessibilityAddTraits(editing ? .isSelected : [])
         .contextMenu {
             Button("Edit", systemImage: "pencil") { model.editFeature(f.id) }
             Button(f.suppressed ? "Turn On" : "Turn Off", systemImage: f.suppressed ? "eye" : "eye.slash") { model.toggleSuppressed(f.id) }
             Divider()
             Button("Delete", systemImage: "trash", role: .destructive) { model.deleteFeature(f.id) }
         }
+    }
+
+    private func accessibilityStatus(_ f: Feature, _ status: ModelBuilder.Status) -> Text {
+        var parts: [Text] = []
+        if f.suppressed { parts.append(Text("Turned off")) }
+        switch status {
+        case .error(let m): parts.append(Text("Has a problem")); parts.append(Text(verbatim: m))
+        case .warning(let m): parts.append(Text("Needs a check")); parts.append(Text(verbatim: m))
+        case .ok: break
+        }
+        guard var out = parts.first else { return Text(verbatim: "") }
+        for p in parts.dropFirst() { out = out + Text(verbatim: ", ") + p }
+        return out
     }
 
     /// "Extrude 2" → localised kind + its number.

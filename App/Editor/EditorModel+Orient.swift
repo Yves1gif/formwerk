@@ -52,6 +52,7 @@ extension EditorModel {
     /// Tries the main directions and the biggest flat faces as "down" and keeps the one with the
     /// least overhang (ties: the lower part, which prints faster and steadier).
     func autoOrient() {
+        guard ProStore.shared.requirePro(.autoOrient, else: { showPaywall = true }) else { return }
         let bodies = output.bodies.filter { !design.style($0.id).hidden }
         guard !bodies.isEmpty else { return }
         var candidates: [Vec3] = [Vec3(0, 0, -1), Vec3(0, 0, 1), Vec3(1, 0, 0), Vec3(-1, 0, 0), Vec3(0, 1, 0), Vec3(0, -1, 0)]

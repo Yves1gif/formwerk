@@ -7,7 +7,7 @@
 - Extrude, revolve, push/pull, fillet, chamfer, hollow, holes (M2–M8), text, mirror, pattern, combine, split
 - Print check (closed solid, overhangs, thin walls, bed size), filament estimate
 - Export 3MF, STL, STEP, OBJ; import STEP
-- 15 languages
+- 16 languages
 
 ## Build
 

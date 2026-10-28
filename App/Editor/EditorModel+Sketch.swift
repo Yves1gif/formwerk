@@ -146,6 +146,8 @@ extension EditorModel {
 
     func setSketchTool(_ t: SketchTool) {
         guard var s = sketch else { return }
+        if t != s.tool { s.previousTool = s.tool }
+        if t != .select { s.lastDrawTool = t }
         s.tool = t
         s.clicks = []
         s.chainStart = nil
@@ -161,6 +163,7 @@ extension EditorModel {
         } else if !s.selected.isEmpty {
             s.selected = []
         } else if s.tool != .select {
+            s.previousTool = s.tool
             s.tool = .select
         }
         sketch = s
@@ -290,9 +293,11 @@ extension EditorModel {
 
     // MARK: - Input
 
-    func sketchTap(_ screen: CGPoint, extend: Bool) {
+    func sketchTap(_ screen: CGPoint, extend: Bool, touch: ViewportTouch = .pointer) {
         guard var s = sketch else { return }
         if s.editingDimension != nil { sketch?.editingDimension = nil; return }
+        // When only the Pencil draws, a finger never places points; it may still select.
+        if touch == .finger && PencilDrawing.isActive && s.tool != .select { return }
         switch s.tool {
         case .select:
             if let item = hitSketchItem(screen) {
@@ -329,8 +334,10 @@ extension EditorModel {
         if s.cursor != sketch?.cursor { sketch = s }
     }
 
-    func sketchDragBegan(_ screen: CGPoint, pencil: Bool) -> Bool {
+    func sketchDragBegan(_ screen: CGPoint, touch: ViewportTouch) -> Bool {
         guard let s = sketch else { return false }
+        // When only the Pencil draws, one finger always orbits.
+        if touch == .finger && PencilDrawing.isActive { return false }
         if s.tool == .select {
             guard let item = hitSketchItem(screen) else { return false }
             switch item {
@@ -353,11 +360,7 @@ extension EditorModel {
         if s.tool == .dimension { return false }
         // Drawing by dragging: press = first point, release = next point. Pencil and mouse always draw;
         // a finger draws only when it starts on the sketch's own geometry or a tool is mid-action.
-        if !pencil && s.clicks.isEmpty && s.chainStart == nil && hitSketchItem(screen) == nil {
-            #if os(iOS)
-            return false
-            #endif
-        }
+        if touch == .finger && s.clicks.isEmpty && s.chainStart == nil && hitSketchItem(screen) == nil { return false }
         guard let snap = snap(screen) else { return false }
         if s.clicks.isEmpty && s.chainStart == nil { drawClick(snap) }
         dragState = .sketchDraw(start: snap)

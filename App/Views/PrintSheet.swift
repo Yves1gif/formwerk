@@ -1,4 +1,5 @@
 import simd
+import StoreKit
 import SwiftUI
 import UniformTypeIdentifiers
 
@@ -6,11 +7,16 @@ import UniformTypeIdentifiers
 struct PrintSheet: View {
     @ObservedObject var model: EditorModel
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.requestReview) private var requestReview
+    /// Successful exports; Apple's rating prompt comes after the third, when someone clearly likes the app.
+    @AppStorage("exportCount") private var exportCount = 0
     @State private var format: ExportFormat = .threeMF
     @State private var quality: ExportQuality = .normal
     @State private var exporting = false
     @State private var shareFile: ExportedFile?
     @State private var fileName = "Formwerk"
+    @State private var showPro = false
+    @ObservedObject private var pro = ProStore.shared
 
     var body: some View {
         NavigationStack {
@@ -48,9 +54,12 @@ struct PrintSheet: View {
 
                 Section("Orientation") {
                     Button {
-                        model.autoOrient()
+                        if pro.isPro { model.autoOrient() } else { showPro = true }
                     } label: {
-                        Label("Auto-orient for least overhang", systemImage: "rotate.3d")
+                        HStack {
+                            Label("Auto-orient for least overhang", systemImage: "rotate.3d")
+                            if !pro.isPro { Spacer(minLength: 4); ProBadge() }
+                        }
                     }
                     Text("Tip: to rest a part on a certain face, select that face and use Lay flat.")
                         .font(.caption).foregroundStyle(.secondary)
@@ -70,10 +79,7 @@ struct PrintSheet: View {
 
                 Section("Export") {
                     TextField("File name", text: $fileName)
-                    Picker("Format", selection: $format) {
-                        ForEach(ExportFormat.allCases) { f in Text(f.rawValue).tag(f) }
-                    }
-                    .pickerStyle(.segmented)
+                    formatChips
                     if format != .step {
                         Picker("Quality", selection: $quality) {
                             Text("Draft").tag(ExportQuality.draft)
@@ -83,10 +89,15 @@ struct PrintSheet: View {
                     }
                     Text(formatHint).font(.caption).foregroundStyle(.secondary)
                     Button {
+                        guard pro.isPro || !format.isPro else { showPro = true; return }
                         exporting = true
                         model.export(format, quality: quality, name: fileName) { file in
                             exporting = false
                             shareFile = file
+                            if file != nil {
+                                exportCount += 1
+                                if exportCount == 3 { DispatchQueue.main.asyncAfter(deadline: .now() + 3) { requestReview() } }
+                            }
                         }
                     } label: {
                         HStack {
@@ -104,6 +115,7 @@ struct PrintSheet: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } }
             }
+            .sheet(isPresented: $showPro) { ProView(model: model) }
             #if os(iOS)
             .sheet(item: $shareFile) { file in ShareSheet(url: file.url) }
             #else
@@ -113,7 +125,41 @@ struct PrintSheet: View {
         #if os(macOS)
         .frame(minWidth: 480, minHeight: 620)
         #endif
-        .onAppear { model.runPrintCheck() }
+        .onAppear {
+            // Free: STL. With Pro, 3MF stays the default (best for slicers).
+            if format.isPro && !pro.isPro { format = .stl }
+            model.runPrintCheck()
+        }
+    }
+
+    /// The export formats as chips. Pro formats carry a small badge and open the paywall when Pro isn't unlocked.
+    private var formatChips: some View {
+        HStack(spacing: 6) {
+            ForEach(ExportFormat.allCases) { f in
+                let locked = f.isPro && !pro.isPro
+                Button {
+                    if locked { showPro = true } else { format = f }
+                } label: {
+                    HStack(spacing: 4) {
+                        Text(f.rawValue)
+                            .font(.callout.weight(.semibold))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+                        if locked { ProBadge() }
+                    }
+                    .padding(.horizontal, 6)
+                    .frame(maxWidth: .infinity, minHeight: 34)
+                    .background(format == f ? Theme.blue : Color.primary.opacity(0.06),
+                                in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+                    .foregroundStyle(format == f ? Color.white : Color.primary)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityAddTraits(format == f ? .isSelected : [])
+            }
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(Text("Format"))
     }
 
     private var formatHint: LocalizedStringKey {
@@ -197,7 +243,7 @@ struct WelcomeView: View {
             VStack(alignment: .leading, spacing: 26) {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Welcome to Formwerk").font(Theme.title(36))
-                    Text("Three steps from idea to print. Free, no account, no limits.")
+                    Text("Three steps from idea to print. Free, no account, no ads.")
                         .font(.title3).foregroundStyle(.secondary)
                 }
                 HStack(alignment: .top, spacing: 14) {
