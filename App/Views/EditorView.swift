@@ -70,7 +70,7 @@ struct EditorView: View {
             if ScreenshotMode.current == .tutorial {
                 tutorialStep = .sketch
             } else if let shot = ScreenshotMode.current {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { shot.prepare(model, showPrint: $showPrint) }
+                prepareWhenBuilt(shot)
             } else if !welcomeSeen {
                 showWelcome = true
             } else if !tutorialDone && model.design.features.isEmpty {
@@ -134,6 +134,17 @@ struct EditorView: View {
         #else
         return false
         #endif
+    }
+
+    /// Screenshot mode: set the scene up once the model is built (a slow simulator can take a while).
+    private func prepareWhenBuilt(_ shot: ScreenshotMode, tries: Int = 0) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + (tries == 0 ? 1.5 : 0.5)) {
+            if (model.isBuilding || model.output.bounds.isEmpty) && tries < 60 {
+                prepareWhenBuilt(shot, tries: tries + 1)
+            } else {
+                shot.prepare(model, showPrint: $showPrint)
+            }
+        }
     }
 
     private var showsInspector: Bool {

@@ -69,8 +69,11 @@ enum ScreenshotMode: String {
         cam.yaw = -.pi / 3.2
         cam.pitch = 0.5
         cam.fit(model.output.bounds, aspect: Double(r.viewSize.width / max(r.viewSize.height, 1)))
-        let narrow = r.viewSize.width < r.viewSize.height
+        // Only a phone in portrait is this narrow; an iPad in portrait frames like landscape.
+        let narrow = r.viewSize.width < r.viewSize.height * 0.6
         cam.distance *= narrow ? (self == .keychain ? 0.6 : 0.7) : (self == .keychain ? 1.0 : 1.35)
+        // The print sheet covers the middle on iPad and Mac: come closer so the pot shows on both sides of it.
+        if self == .print && !narrow { cam.distance *= 0.55 }
         r.camera = cam
         switch self {
         case .model:
