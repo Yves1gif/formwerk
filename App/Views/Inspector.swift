@@ -4,9 +4,12 @@ import SwiftUI
 /// The right panel: settings of the open tool, the sketch status, or facts about the selection.
 struct Inspector: View {
     @ObservedObject var model: EditorModel
+    #if os(iOS)
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    #endif
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: Theme.Space.m) {
             if model.sketch != nil {
                 SketchPanel(model: model)
             } else if let tool = model.tool {
@@ -19,9 +22,29 @@ struct Inspector: View {
                 SectionPanel(model: model)
             }
         }
-        .padding(16)
+        .padding(Theme.Space.m)
         .frame(maxWidth: .infinity, alignment: .leading)
         .glassPanel()
+        // The panel grows from where it lives and morphs (size and content) between sketch,
+        // tool and selection instead of jumping.
+        .panelAppear(from: anchor)
+        .animation(Theme.Motion.smooth, value: mode)
+    }
+
+    /// Which panel is showing (sketch, tool, selection, nothing); the change is animated.
+    private var mode: Int {
+        if model.sketch != nil { return 1 }
+        if model.tool != nil { return 2 }
+        return model.selection.isEmpty ? 0 : 3
+    }
+
+    /// Right column on wide screens, above the bottom bar on narrow ones.
+    private var anchor: UnitPoint {
+        #if os(iOS)
+        return sizeClass == .compact ? .bottom : .topTrailing
+        #else
+        return .topTrailing
+        #endif
     }
 }
 
@@ -36,10 +59,12 @@ struct PanelButtons: View {
             Button("Cancel", role: .cancel, action: cancel)
                 .buttonStyle(PanelButtonStyle())
                 .keyboardShortcut(.cancelAction)
-            Button("Done", action: done)
-                .buttonStyle(PanelButtonStyle(prominent: true))
-                .disabled(!doneEnabled)
-                .opacity(doneEnabled ? 1 : 0.5)
+            Button("Done") {
+                Theme.Haptics.play(.success)
+                done()
+            }
+            .buttonStyle(PanelButtonStyle(prominent: true))
+            .disabled(!doneEnabled)
         }
         .padding(.top, 4)
     }
@@ -63,6 +88,10 @@ struct SketchPanel: View {
                         Text("Side (YZ)").tag(OriginPlane.yz)
                     }
                 }
+                LengthField(title: "Offset", value: Binding(get: { model.sketchPlaneOffset }, set: { model.setSketchPlaneOffset($0) }), unit: model.design.unit)
+                if s.offsetEdit != nil {
+                    LengthField(title: "Offset distance", value: Binding(get: { s.offsetDistance }, set: { model.setOffsetDistance($0) }), unit: model.design.unit, step: 0.4)
+                }
                 status(s)
                 HStack(spacing: 8) {
                     Button { model.sketchUndo() } label: {
@@ -85,15 +114,25 @@ struct SketchPanel: View {
         }
     }
 
+    /// One label whose icon swaps (SF Symbol `.replace`) and bounces when the sketch becomes fully defined.
     @ViewBuilder
     private func status(_ s: SketchSession) -> some View {
-        if let r = s.solve, !r.conflicting.isEmpty {
-            StatusLabel(text: "Some constraints contradict each other (red).", icon: "exclamationmark.triangle.fill", tint: Theme.problem)
-        } else if let r = s.solve, r.isFullyDefined, !s.isEmpty {
-            StatusLabel(text: "Fully defined", icon: "checkmark.seal.fill", tint: Theme.ready)
-        } else if !s.isEmpty {
-            StatusLabel(text: "Blue parts can still move. Add dimensions to fix them.", icon: "circle.dashed", tint: Theme.blue)
+        if let st = statusInfo(s) {
+            StatusLabel(text: st.text, icon: st.icon, tint: st.tint)
+                .symbolBounce(on: st.icon == "checkmark.seal.fill")
+                .animation(Theme.Motion.snappy, value: st.icon)
         }
+    }
+
+    private func statusInfo(_ s: SketchSession) -> (text: LocalizedStringKey, icon: String, tint: Color)? {
+        if let r = s.solve, !r.conflicting.isEmpty {
+            return ("Some constraints contradict each other (red).", "exclamationmark.triangle.fill", Theme.problem)
+        } else if let r = s.solve, r.isFullyDefined, !s.isEmpty {
+            return ("Fully defined", "checkmark.seal.fill", Theme.ready)
+        } else if !s.isEmpty {
+            return ("Blue parts can still move. Add dimensions to fix them.", "circle.dashed", Theme.blue)
+        }
+        return nil
     }
 }
 
@@ -113,7 +152,12 @@ struct StatusLabel: View {
     }
 
     var body: some View {
-        Label { text.foregroundStyle(.primary) } icon: { Image(systemName: icon).foregroundStyle(tint) }
+        Label {
+            text.foregroundStyle(.primary)
+        } icon: {
+            Image(systemName: icon).foregroundStyle(tint)
+                .contentTransition(.symbolEffect(.replace))
+        }
             .font(.callout)
             .fixedSize(horizontal: false, vertical: true)
     }
@@ -124,17 +168,23 @@ struct StatusLabel: View {
 struct ToolPanel: View {
     @ObservedObject var model: EditorModel
     let tool: ToolSession
+    /// Bumped when a tool opens or changes, to bounce its icon.
+    @State private var bounce = 0
 
     private var unit: LengthUnit { model.design.unit }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: Theme.Space.s) {
             HStack(spacing: 10) {
                 Image(systemName: tool.kind.icon)
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundStyle(Theme.blue)
+                    .contentTransition(.symbolEffect(.replace))
                     .frame(width: 36, height: 36)
                     .background(Theme.blue.opacity(0.12), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .symbolBounce(on: bounce)
+                    .onAppear { bounce += 1 }
+                    .onChange(of: tool.kind) { _, _ in bounce += 1 }
                     .accessibilityHidden(true)
                 Text(tool.kind.title).font(Theme.title(Theme.panelTitleSize, weight: .semibold))
                     .lineLimit(2).minimumScaleFactor(0.8)
@@ -145,14 +195,15 @@ struct ToolPanel: View {
             fields
             switch tool.status {
             case .error(let m): StatusLabel(verbatim: m, icon: "xmark.octagon.fill", tint: Theme.problem)
-            case .warning(let m): StatusLabel(verbatim: m, icon: "exclamationmark.triangle.fill", tint: .orange)
+            case .warning(let m): StatusLabel(verbatim: m, icon: "exclamationmark.triangle.fill", tint: Theme.caution)
             case .ok: EmptyView()
             }
             if tool.kind == .measure {
                 if let m = model.measurement {
                     Text(m.text).font(.title2.monospacedDigit().weight(.semibold))
+                        .numericTransition(m.distance)
                 }
-                Button("Close") { model.cancelTool() }.buttonStyle(.bordered)
+                Button("Close") { model.cancelTool() }.buttonStyle(PanelButtonStyle())
             } else {
                 PanelButtons(done: { model.applyTool() }, cancel: { model.cancelTool() },
                              doneEnabled: !{ if case .error = tool.status { return true } else { return false } }())
@@ -177,6 +228,7 @@ struct ToolPanel: View {
                 update(.extrude(n))
             }), unit: unit)
             Toggle("Both directions", isOn: Binding(get: { e.symmetric }, set: { var n = e; n.symmetric = $0; update(.extrude(n)) }))
+            AngleField(title: "Taper (draft)", radians: Binding(get: { e.draftAngle ?? 0 }, set: { var n = e; n.draftAngle = abs($0) < 1e-6 ? nil : min(max($0, -.pi / 4), .pi / 4); update(.extrude(n)) }), step: 1)
             modePicker(e.mode) { var n = e; n.mode = $0; update(.extrude(n), manual: true) }
             Text("\(e.regionSeeds.count) areas").font(.caption).foregroundStyle(.secondary)
 
@@ -231,8 +283,14 @@ struct ToolPanel: View {
                 Text("Around an axis").tag(PatternFeature.Kind.circular)
             }
             Stepper(value: Binding(get: { p.count }, set: { var n = p; n.count = $0; update(.pattern(n)) }), in: 2...200) {
-                HStack { Text("Count").foregroundStyle(.secondary); Spacer(); Text("\(p.count)").monospacedDigit() }.font(.callout)
+                HStack {
+                    Text("Count").foregroundStyle(.secondary)
+                    Spacer()
+                    Text("\(p.count)").font(Theme.number()).numericTransition(Double(p.count))
+                }
+                .font(.callout)
             }
+            .formwerkFeedback(.selection, trigger: p.count)
             if p.kind == .linear {
                 PickerRow(title: "Direction", selection: Binding(get: { axisIndex(p.direction) }, set: { var n = p; n.direction = axisVector($0); update(.pattern(n)) })) {
                     Text("X").tag(0); Text("Y").tag(1); Text("Z").tag(2)
@@ -336,6 +394,17 @@ struct ToolPanel: View {
             Text("Counterbore").tag(HoleFeature.Kind.counterbore)
             Text("Countersink").tag(HoleFeature.Kind.countersink)
         }
+        PickerRow(title: "Thread for printing", selection: Binding(get: { h.printThread?.size ?? "" }, set: { size in
+            var n = h; n.apply(size.isEmpty ? nil : PrintThread(size: size, kind: h.printThread?.kind ?? .heatSetInsert)); update(.hole(n)) })) {
+            Text("None").tag("")
+            ForEach(PrintThread.sizes, id: \.name) { Text(verbatim: $0.name).tag($0.name) }
+        }
+        if let t = h.printThread {
+            PickerRow(title: "Kind", selection: Binding(get: { t.kind }, set: { var n = h; n.apply(PrintThread(size: t.size, kind: $0)); update(.hole(n)) })) {
+                Text("Heat-set insert").tag(PrintThread.Kind.heatSetInsert)
+                Text("Screw cuts its own thread").tag(PrintThread.Kind.screwCutsThread)
+            }
+        }
         HStack {
             Text("Screw").font(.callout).foregroundStyle(.secondary)
             Spacer()
@@ -343,6 +412,7 @@ struct ToolPanel: View {
                 ForEach(ScrewSize.all, id: \.name) { s in
                     Button("\(s.name) (\(Format.number(s.clearance)) mm)") {
                         var n = h
+                        n.printThread = nil
                         n.diameter = s.clearance
                         n.headDiameter = n.kind == .countersink ? s.countersink : s.headDiameter
                         n.headDepth = s.headDepth
@@ -352,7 +422,7 @@ struct ToolPanel: View {
             }
             .fixedSize()
         }
-        LengthField(title: "Diameter", value: Binding(get: { h.diameter }, set: { var n = h; n.diameter = max($0, 0.2); update(.hole(n)) }), unit: unit, step: 0.1, range: 0.2...10_000)
+        LengthField(title: "Diameter", value: Binding(get: { h.diameter }, set: { var n = h; n.printThread = nil; n.diameter = max($0, 0.2); update(.hole(n)) }), unit: unit, step: 0.1, range: 0.2...10_000)
         Toggle("Through everything", isOn: Binding(get: { h.depth <= 0 }, set: { var n = h; n.depth = $0 ? 0 : 10; update(.hole(n)) }))
         if h.depth > 0 {
             LengthField(title: "Depth", value: Binding(get: { h.depth }, set: { var n = h; n.depth = max($0, 0.1); update(.hole(n)) }), unit: unit, range: 0.1...10_000)
@@ -465,19 +535,29 @@ struct SelectionPanel: View {
                         .overlay(Circle().strokeBorder(Color.primary.opacity(0.25)))
                         .padding(3)
                         .overlay(Circle().strokeBorder(current == i ? Theme.blue : .clear, lineWidth: 2))
+                        .scaleEffect(current == i ? 1.08 : 1)
+                        .hoverHighlight(Circle())
                         .frame(width: 32, height: Theme.minTouch)
                         .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(PressScaleButtonStyle(scale: 0.88))
                 .accessibilityLabel(Text("Color \(i + 1)"))
                 .accessibilityAddTraits(current == i ? .isSelected : [])
             }
         }
+        .animation(Theme.Motion.snappy, value: current)
+        .formwerkFeedback(.selection, trigger: current)
     }
 
     private func header(_ title: LocalizedStringKey, icon: String) -> some View {
-        Label(title, systemImage: icon).font(Theme.title(Theme.panelTitleSize, weight: .semibold))
-            .accessibilityAddTraits(.isHeader)
+        Label {
+            Text(title)
+        } icon: {
+            Image(systemName: icon).foregroundStyle(Theme.signal)
+                .contentTransition(.symbolEffect(.replace))
+        }
+        .font(Theme.title(Theme.panelTitleSize, weight: .semibold))
+        .accessibilityAddTraits(.isHeader)
     }
 
     private func fact(_ title: LocalizedStringKey, _ value: String) -> some View {
@@ -485,6 +565,8 @@ struct SelectionPanel: View {
             Text(title).foregroundStyle(.secondary)
             Spacer(minLength: 8)
             Text(value).font(Theme.number()).lineLimit(1).minimumScaleFactor(0.7)
+                .contentTransition(.numericText())
+                .animation(Theme.Motion.snappy, value: value)
         }
         .font(.callout)
         .accessibilityElement(children: .combine)
@@ -503,16 +585,18 @@ struct SectionPanel: View {
                 HStack {
                     Label("Section", systemImage: "square.split.diagonal").font(.headline)
                     Spacer()
-                    Button("End") { model.toggleSection() }.buttonStyle(.bordered).buttonBorderShape(.capsule)
+                    Button("End") { model.toggleSection() }.buttonStyle(PillButtonStyle())
                 }
                 Picker("Axis", selection: Binding(get: { s.axis }, set: { model.setSectionAxis($0) })) {
                     Text("X").tag(0); Text("Y").tag(1); Text("Z").tag(2)
                 }
                 .pickerStyle(.segmented)
+                .formwerkFeedback(.selection, trigger: s.axis)
                 Slider(value: Binding(get: { s.offset }, set: { model.section?.offset = $0 }), in: lo...max(hi, lo + 1))
                     .accessibilityLabel(Text("Section"))
                     .accessibilityValue(Text(Format.length(s.offset, unit: model.design.unit)))
                 Text(Format.length(s.offset, unit: model.design.unit)).font(Theme.number(12)).foregroundStyle(.secondary)
+                    .numericTransition(s.offset)
             }
         }
     }

@@ -222,8 +222,13 @@ enum Kernel {
         }
     }
 
-    static func extrude(_ profile: Shape, direction: Vec3, distance: Double, symmetric: Bool = false) throws -> Shape {
-        try run { fw_extrude(profile.ptr, direction.fw, distance, symmetric, $0) }
+    /// `draftAngle` (radians) tapers the side walls: positive = narrower towards the far end.
+    static func extrude(_ profile: Shape, direction: Vec3, distance: Double, symmetric: Bool = false,
+                        draftAngle: Double = 0) throws -> Shape {
+        if abs(draftAngle) < 1e-4 {
+            return try run { fw_extrude(profile.ptr, direction.fw, distance, symmetric, $0) }
+        }
+        return try run { fw_extrude_draft(profile.ptr, direction.fw, distance, symmetric, draftAngle, $0) }
     }
 
     static func revolve(_ profile: Shape, axisOrigin: Vec3, axis: Vec3, angle: Double) throws -> Shape {

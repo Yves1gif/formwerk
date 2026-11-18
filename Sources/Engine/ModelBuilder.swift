@@ -91,14 +91,16 @@ final class ModelBuilder {
         let fid = f.id.uuidString
         switch f.operation {
         case .sketch(let sk):
-            let (plane, warning) = try resolve(sk.plane, in: s)
+            let (basePlane, warning) = try resolve(sk.plane, in: s)
+            let plane = basePlane.offset(by: sk.planeOffset ?? 0)
             s.sketches[f.id] = SketchInfo(plane: plane, regions: SketchRegions.find(in: sk.sketch))
             if let warning { s.statuses[f.id] = .warning(warning) }
 
         case .extrude(let e):
             guard let info = s.sketches[e.sketch] else { throw KernelError(message: Msg.sketchMissing) }
             let profile = try profileShape(info, seeds: e.regionSeeds)
-            let solid = try Kernel.extrude(profile, direction: info.plane.normal, distance: e.distance, symmetric: e.symmetric)
+            let solid = try Kernel.extrude(profile, direction: info.plane.normal, distance: e.distance,
+                                           symmetric: e.symmetric, draftAngle: e.draftAngle ?? 0)
             try combine(solid, mode: e.mode, target: e.target, newID: fid, into: &s)
 
         case .revolve(let r):

@@ -47,6 +47,11 @@ struct BuildOutput {
 
 /// Runs every kernel call on one serial queue: rebuilds, tessellation, measuring, exporting.
 /// OCCT may change a shape's cached triangulation while meshing, so nothing else may touch shapes concurrently.
+///
+/// Rebuilds are "latest wins": while one runs, newer requests replace each other instead of queueing up,
+/// and a build that has been superseded stops before meshing its remaining bodies. Only the newest
+/// request's completion is called; superseded ones are dropped (the editor ignores stale results anyway).
+/// Nothing here ever runs on the main thread.
 final class BuildWorker: @unchecked Sendable {
     let queue = DispatchQueue(label: "com.yvesf.formwerk.build", qos: .userInitiated)
     private let builder = ModelBuilder()
@@ -54,12 +59,62 @@ final class BuildWorker: @unchecked Sendable {
     private var sketchCache: [UUID: (plane: Plane, regions: [SketchRegion], built: BuiltSketch)] = [:]
     private var meshSerial = 0
 
-    /// Builds on the queue and calls back on the main thread.
+    private struct BuildRequest {
+        let design: Design
+        let end: Int?
+        let completion: @MainActor (BuildOutput) -> Void
+    }
+    private struct RegionRequest {
+        let regions: [SketchRegion]
+        let plane: Plane
+        let completion: @MainActor ([[SIMD3<Float>]]) -> Void
+    }
+
+    /// Guards the request slots below (written from the main thread, read on the queue).
+    private let lock = NSLock()
+    private var pendingBuild: BuildRequest?
+    private var buildScheduled = false
+    /// Bumps with every build request; a running build compares it to see whether it is still wanted.
+    private var buildSerial = 0
+    private var pendingRegions: RegionRequest?
+    private var regionsScheduled = false
+
+    /// Builds on the queue and calls back on the main thread. A newer call supersedes this one.
     func build(_ design: Design, end: Int?, completion: @escaping @MainActor (BuildOutput) -> Void) {
-        queue.async {
-            let out = self.buildNow(design, end: end)
+        lock.lock()
+        pendingBuild = BuildRequest(design: design, end: end, completion: completion)
+        buildSerial &+= 1
+        let schedule = !buildScheduled
+        buildScheduled = true
+        lock.unlock()
+        if schedule { queue.async { self.runPendingBuild() } }
+    }
+
+    /// Runs the newest build request. One request per queue block, so exports and measurements
+    /// queued in between don't wait behind a whole drag's worth of rebuilds.
+    private func runPendingBuild() {
+        lock.lock()
+        let request = pendingBuild
+        pendingBuild = nil
+        let serial = buildSerial
+        lock.unlock()
+
+        if let request, let out = buildNow(request.design, end: request.end, serial: serial) {
+            let completion = request.completion
             DispatchQueue.main.async { MainActor.assumeIsolated { completion(out) } }
         }
+
+        lock.lock()
+        let more = pendingBuild != nil
+        if !more { buildScheduled = false }
+        lock.unlock()
+        if more { queue.async { self.runPendingBuild() } }
+    }
+
+    private func isSuperseded(_ serial: Int) -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return buildSerial != serial
     }
 
     /// Runs any kernel work on the queue and returns the result on the main thread.
@@ -70,7 +125,8 @@ final class BuildWorker: @unchecked Sendable {
         }
     }
 
-    private func buildNow(_ design: Design, end: Int?) -> BuildOutput {
+    /// Nil when a newer request arrived while meshing (the work done so far stays cached).
+    private func buildNow(_ design: Design, end: Int?, serial: Int) -> BuildOutput? {
         let state = builder.build(design, upTo: end)
         var out = BuildOutput()
         out.statuses = state.statuses
@@ -81,6 +137,12 @@ final class BuildWorker: @unchecked Sendable {
                 out.bodies.append(cached.body)
                 keep[key] = cached
                 continue
+            }
+            // Meshing is the slow part: don't mesh for a design nobody waits for any more.
+            if isSuperseded(serial) {
+                // Keep both old and new entries; the next complete build trims the cache.
+                bodyCache.merge(keep) { _, new in new }
+                return nil
             }
             let built = describe(b)
             out.bodies.append(built)
@@ -127,7 +189,30 @@ final class BuildWorker: @unchecked Sendable {
     }
 
     /// Fills for a sketch that is being edited (computed on the queue, regions may change at any time).
+    /// Latest wins: a newer call replaces one that hasn't started yet (its completion is dropped).
     func regionTriangles(_ regions: [SketchRegion], plane: Plane, completion: @escaping @MainActor ([[SIMD3<Float>]]) -> Void) {
-        run({ regions.map { Self.triangles(of: $0, on: plane) } }, completion: completion)
+        lock.lock()
+        pendingRegions = RegionRequest(regions: regions, plane: plane, completion: completion)
+        let schedule = !regionsScheduled
+        regionsScheduled = true
+        lock.unlock()
+        if schedule { queue.async { self.runPendingRegions() } }
+    }
+
+    private func runPendingRegions() {
+        lock.lock()
+        let request = pendingRegions
+        pendingRegions = nil
+        lock.unlock()
+        if let request {
+            let fills = request.regions.map { Self.triangles(of: $0, on: request.plane) }
+            let completion = request.completion
+            DispatchQueue.main.async { MainActor.assumeIsolated { completion(fills) } }
+        }
+        lock.lock()
+        let more = pendingRegions != nil
+        if !more { regionsScheduled = false }
+        lock.unlock()
+        if more { queue.async { self.runPendingRegions() } }
     }
 }

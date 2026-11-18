@@ -72,11 +72,12 @@ struct RailButton: View {
 
     var body: some View {
         Button(action: action) {
+            // The icon bounces when the tool turns on.
             RailLabel(title: title, icon: icon)
-                .background(active ? Theme.blue : .clear, in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
+                .symbolBounce(on: active)
         }
-        .buttonStyle(.plain)
-        .foregroundStyle(active ? Color.white : .primary)
+        // The style paints the blue active tile, the hover highlight and the press.
+        .buttonStyle(RailButtonStyle(active: active))
         .help(Text(title))
         .accessibilityLabel(Text(title))
         .accessibilityAddTraits(active ? .isSelected : [])
@@ -135,7 +136,7 @@ struct SketchToolbar: View {
         if let s = model.sketch {
             let layout = horizontal ? AnyLayout(HStackLayout(spacing: 4)) : AnyLayout(VStackLayout(spacing: 4))
             let tools = layout {
-                    ForEach(SketchTool.allCases) { t in
+                    ForEach(SketchTool.drawingTools) { t in
                         // Its letter key is handled by the 3D view (EditorModel.letterKey), not here:
                         // a SwiftUI shortcut without ⌘ would also fire while typing a dimension.
                         RailButton(title: t.title, icon: t.icon, active: s.tool == t) {
@@ -144,6 +145,19 @@ struct SketchToolbar: View {
                     }
                     if s.tool == .polygon {
                         PolygonSidesControl(sides: s.polygonSides, horizontal: horizontal) { model.sketch?.polygonSides = $0 }
+                    }
+                    // Changing what is drawn: one menu keeps the rail short.
+                    RailMenu(title: "Modify", icon: "wand.and.rays") {
+                        Button { model.setSketchTool(.trim) } label: { Label(SketchTool.trim.title, systemImage: SketchTool.trim.icon) }
+                        Button { model.setSketchTool(.fillet) } label: { Label(SketchTool.fillet.title, systemImage: SketchTool.fillet.icon) }
+                        Button { model.offsetSketchSelection() } label: { Label("Offset", systemImage: "square.on.square.dashed") }
+                        Button { model.startSketchMirror() } label: { Label(SketchTool.mirror.title, systemImage: SketchTool.mirror.icon) }
+                        Divider()
+                        Button { model.toggleConstruction() } label: { Label("Construction", systemImage: "line.3.horizontal.decrease") }
+                    }
+                    // The active modify tool shows as a lit button; tapping it goes back to Select.
+                    if s.tool.isModifyTool {
+                        RailButton(title: s.tool.title, icon: s.tool.icon, active: true) { model.setSketchTool(.select) }
                     }
             }
             if horizontal {

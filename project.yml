@@ -63,6 +63,8 @@ targets:
         ITSAppUsesNonExemptEncryption: false
         LSSupportsOpeningDocumentsInPlace: true
         UISupportsDocumentBrowser: true
+        # ProMotion: let iPhones (Duo included) render the 3D view at 120 Hz, not only iPads.
+        CADisableMinimumFrameDurationOnPhone: true
         # iCloud Drive gets a "Formwerk" folder; the document browser / save panel lets people pick any other place.
         NSUbiquitousContainers:
           iCloud.com.yvesf.formwerk:

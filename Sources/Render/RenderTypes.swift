@@ -7,6 +7,9 @@ struct GPUUniforms {
     var viewProj: simd_float4x4
     var cameraPos: SIMD4<Float>
     var viewDir: SIMD4<Float>
+    /// The camera's screen-right and screen-up axes in world space (the light rig follows the camera).
+    var cameraRight: SIMD4<Float>
+    var cameraUp: SIMD4<Float>
     var clipPlane: SIMD4<Float>
     var viewport: SIMD2<Float>
     var clipOn: Float
@@ -42,6 +45,22 @@ struct GPULineSegment {
         self.width = width
         self.pick = pick
     }
+}
+
+/// Grid fade: lines thin out towards the edge of the grid and where the plane turns edge-on (horizon).
+struct GPUGridUniforms {
+    /// xyz = the point the camera orbits, projected on the grid plane; w = radius where the grid is gone.
+    var center: SIMD4<Float>
+    /// xyz = grid plane normal.
+    var normal: SIMD4<Float>
+}
+
+/// A soft contact shadow under one body: a blurred rounded rectangle on the ground plane.
+struct GPUShadow {
+    /// minX, minY, maxX, maxY of the body's footprint.
+    var rect: SIMD4<Float>
+    /// x = ground height, y = blur width, z = corner radius, w = darkness (0…1).
+    var params: SIMD4<Float>
 }
 
 struct GPUPointSprite {
@@ -85,6 +104,8 @@ struct RenderScene {
     var clipPlane: SIMD4<Float>? = nil
     var showGrid = true
     var gridPlane: Plane = .xy
+    /// Soft contact shadows under opaque bodies on the ground (z = 0, or lower if a body reaches below).
+    var showShadows = true
     var edgeColor = SIMD4<Float>(0.13, 0.14, 0.17, 1)
     /// Werk Blue for "you could pick this", Signal Orange for "picked" (design system).
     var hoverColor = SIMD4<Float>(0.12, 0.37, 0.84, 1)

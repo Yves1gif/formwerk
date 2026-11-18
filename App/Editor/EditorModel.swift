@@ -34,8 +34,9 @@ final class EditorModel: ObservableObject {
     @Published var sketch: SketchSession? { didSet { sketchChanged() } }
     @Published var tool: ToolSession? { didSet { toolChanged(oldValue) } }
     @Published var toast: Toast?
-    /// Bumps on every camera move, so overlays (dimension labels) follow.
-    @Published private(set) var cameraTick = 0
+    /// Bumps on every camera move, so overlays (dimension labels) follow. A separate object, so a camera
+    /// frame only redraws those overlays and not the whole editor.
+    let cameraTicker = CameraTicker()
     @Published var section: SectionView? { didSet { refreshScene() } }
     @Published var printCheck: PrintCheckResult? { didSet { refreshScene() } }
     @Published var measurement: Measurement?
@@ -55,7 +56,7 @@ final class EditorModel: ObservableObject {
         self.design = document?.design ?? Design()
         self.renderer = Renderer(device: MTLCreateSystemDefaultDevice())
         renderer?.onCameraChange = { [weak self] _ in
-            Task { @MainActor in self?.cameraTick &+= 1 }
+            Task { @MainActor in self?.cameraTicker.tick &+= 1 }
         }
         document?.$design
             .receive(on: DispatchQueue.main)
@@ -358,4 +359,9 @@ struct Measurement: Equatable {
     var b: Vec3
     var distance: Double
     var text: String
+}
+
+/// Camera-move counter for overlays that follow the 3D view.
+@MainActor final class CameraTicker: ObservableObject {
+    @Published var tick = 0
 }

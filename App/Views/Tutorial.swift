@@ -82,29 +82,35 @@ struct TutorialCoach: View {
         if let s = step {
             let total = TutorialStep.allCases.count - 1
             let tint = s == .done ? Theme.ready : Theme.blue
-            HStack(alignment: .top, spacing: 16) {
+            HStack(alignment: .top, spacing: Theme.Space.m) {
                 Image(systemName: s.icon)
                     .font(.system(size: 20, weight: .semibold))
                     .foregroundStyle(tint)
+                    .contentTransition(.symbolEffect(.replace))
+                    .symbolBounce(on: s == .done)
                     .frame(width: 44, height: 44)
                     .background(tint.opacity(0.12), in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
                     .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: Theme.Space.xs) {
                     if s != .done {
-                        HStack(spacing: 8) {
+                        HStack(spacing: Theme.Space.xs) {
                             Text("Step \(s.rawValue + 1) of \(total)")
                                 .font(.caption.weight(.semibold)).foregroundStyle(.secondary)
                                 .monospacedDigit()
+                                .numericTransition(Double(s.rawValue))
                             progress(current: s.rawValue, total: total)
                         }
                     }
-                    VStack(alignment: .leading, spacing: 4) {
+                    // The instruction slides in as the next piece (a cross-fade with Reduce Motion).
+                    VStack(alignment: .leading, spacing: Theme.Space.xxs) {
                         Text(s.title).font(Theme.title(Theme.panelTitleSize, weight: .semibold))
                             .fixedSize(horizontal: false, vertical: true)
                             .accessibilityAddTraits(.isHeader)
                         Text(s.text).font(.subheadline).foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
+                    .id(s)
+                    .transition(Theme.Motion.push(from: .trailing))
                     // Buttons under the text: long translations ("Anleitung überspringen") no longer squeeze it.
                     HStack {
                         Spacer(minLength: 0)
@@ -115,19 +121,21 @@ struct TutorialCoach: View {
                         }
                     }
                 }
+                .clipped()
             }
-            .padding(16)
+            .padding(Theme.Space.m)
             .frame(maxWidth: 520)
             .glassPanel(radius: Theme.Radius.card)
             .accessibilityElement(children: .contain)
-            .transition(.move(edge: .top).combined(with: .opacity))
+            .transition(Theme.Motion.panel(from: .bottom))
+            .formwerkFeedback(.success, trigger: s == .done)
             // Re-check the current step whenever the editor changes.
             .onReceive(model.objectWillChange.receive(on: DispatchQueue.main)) { _ in advanceIfDone() }
             .onChange(of: printShown) { _, _ in advanceIfDone() }
         }
     }
 
-    /// One short bar per step: done steps filled, the current one in blue.
+    /// One short bar per step: done steps filled, the current one in blue and longer.
     private func progress(current: Int, total: Int) -> some View {
         HStack(spacing: 3) {
             ForEach(0..<total, id: \.self) { i in
@@ -137,6 +145,7 @@ struct TutorialCoach: View {
                     .frame(width: i == current ? 16 : 8, height: 4)
             }
         }
+        .animation(Theme.Motion.smooth, value: current)
         .accessibilityHidden(true)
     }
 
@@ -147,7 +156,7 @@ struct TutorialCoach: View {
             s = next
         }
         if s != step {
-            withAnimation(.snappy) { step = s }
+            withAnimation(Theme.Motion.smooth) { step = s }
             // VoiceOver users hear the next instruction without hunting for the card.
             AccessibilityNotification.Announcement(String(localized: s.titleResource)).post()
         }
@@ -155,6 +164,6 @@ struct TutorialCoach: View {
 
     private func finish() {
         tutorialDone = true
-        withAnimation(.snappy) { step = nil }
+        withAnimation(Theme.Motion.snappy) { step = nil }
     }
 }

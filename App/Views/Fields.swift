@@ -10,6 +10,8 @@ struct LengthField: View {
     var step: Double = 1
     var range: ClosedRange<Double> = -100_000...100_000
     @State private var text = ""
+    /// Counts inputs that couldn't be read: the field shakes and an error tap plays.
+    @State private var invalid = 0
     @FocusState private var focused: Bool
 
     var body: some View {
@@ -18,14 +20,16 @@ struct LengthField: View {
             TextField("", text: $text)
                 .multilineTextAlignment(.trailing)
                 .font(Theme.number())
+                .modifier(NumberFieldChrome(focused: focused))
                 .frame(width: 88)
-                .textFieldStyle(.roundedBorder)
                 .focused($focused)
                 .onSubmit(commit)
                 .accessibilityLabel(Text(title))
                 #if os(iOS)
                 .keyboardType(.numbersAndPunctuation)
                 #endif
+                .shake(trigger: invalid)
+                .formwerkFeedback(.error, trigger: invalid)
             StepButton(icon: "plus", label: "Increase") { set(value + step * unit.millimetres) }
         }
         .onAppear { text = display(value) }
@@ -36,7 +40,12 @@ struct LengthField: View {
     private func display(_ mm: Double) -> String { "\(Format.number(mm / unit.millimetres, digits: 3)) \(unit.symbol)" }
 
     private func commit() {
-        if let v = Expression.parseLength(text, defaultUnit: unit) { set(v) } else { text = display(value) }
+        if let v = Expression.parseLength(text, defaultUnit: unit) {
+            set(v)
+        } else {
+            if text != display(value) { invalid += 1 }
+            text = display(value)
+        }
     }
 
     private func set(_ v: Double) {
@@ -52,6 +61,8 @@ struct AngleField: View {
     @Binding var radians: Double
     var step: Double = 15
     @State private var text = ""
+    /// Counts inputs that couldn't be read: the field shakes and an error tap plays.
+    @State private var invalid = 0
     @FocusState private var focused: Bool
 
     var body: some View {
@@ -60,14 +71,16 @@ struct AngleField: View {
             TextField("", text: $text)
                 .multilineTextAlignment(.trailing)
                 .font(Theme.number())
+                .modifier(NumberFieldChrome(focused: focused))
                 .frame(width: 88)
-                .textFieldStyle(.roundedBorder)
                 .focused($focused)
                 .onSubmit(commit)
                 .accessibilityLabel(Text(title))
                 #if os(iOS)
                 .keyboardType(.numbersAndPunctuation)
                 #endif
+                .shake(trigger: invalid)
+                .formwerkFeedback(.error, trigger: invalid)
             StepButton(icon: "plus", label: "Increase") { set(radians * 180 / .pi + step) }
         }
         .onAppear { text = Format.angle(radians) }
@@ -76,7 +89,12 @@ struct AngleField: View {
     }
 
     private func commit() {
-        if let r = Expression.parseAngle(text) { radians = r; text = Format.angle(r) } else { text = Format.angle(radians) }
+        if let r = Expression.parseAngle(text) {
+            radians = r; text = Format.angle(r)
+        } else {
+            if text != Format.angle(radians) { invalid += 1 }
+            text = Format.angle(radians)
+        }
     }
 
     private func set(_ deg: Double) {
@@ -142,23 +160,52 @@ struct FieldRowLayout: Layout {
 }
 
 /// The round −/+ buttons next to number fields: a 28 pt circle inside a 36 × 44 pt tap area.
+/// Each step gives a light tick on iPhone (a bit stronger going up), also while held down.
 struct StepButton: View {
     let icon: String
     let label: LocalizedStringKey
     let action: () -> Void
+    @State private var ticks = 0
 
     var body: some View {
-        Button(action: action) {
+        Button {
+            ticks += 1
+            action()
+        } label: {
             Image(systemName: icon).font(.caption.weight(.bold))
                 .frame(width: 28, height: 28)
-                .background(Color.primary.opacity(0.07), in: Circle())
+                .background(Theme.quietFill, in: Circle())
+                .hoverHighlight(Circle())
                 .frame(width: 36, height: Theme.minTouch)
                 .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PressScaleButtonStyle(scale: 0.86))
         .accessibilityLabel(Text(label))
+        .formwerkFeedback(icon == "plus" ? Theme.Haptics.stepUp : Theme.Haptics.stepDown, trigger: ticks)
         #if os(iOS)
         .buttonRepeatBehavior(.enabled)
+        #endif
+    }
+}
+
+/// The number box itself: a quiet rounded field with a Werk Blue ring while editing on iPhone/iPad,
+/// the native rounded border (with the system focus ring) on Mac.
+private struct NumberFieldChrome: ViewModifier {
+    let focused: Bool
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        #if os(iOS)
+        let shape = RoundedRectangle(cornerRadius: 10, style: .continuous)
+        content
+            .textFieldStyle(.plain)
+            .padding(.horizontal, Theme.Space.xs)
+            .frame(height: 36)
+            .background(Theme.quietFill, in: shape)
+            .overlay(shape.strokeBorder(focused ? Theme.blue : Color.clear, lineWidth: 1.5))
+            .animation(Theme.Motion.snappy, value: focused)
+        #else
+        content.textFieldStyle(.roundedBorder)
         #endif
     }
 }

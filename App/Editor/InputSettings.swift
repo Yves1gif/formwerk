@@ -47,6 +47,20 @@ enum PencilDrawing: String, CaseIterable, Identifiable {
     }
 }
 
+/// Haptic feedback when a sketch point snaps: the barrel of Apple Pencil Pro, the Taptic Engine of an iPhone,
+/// the Force Touch trackpad of a Mac. On by default.
+enum PencilHaptics {
+    static let key = "pencilHaptics"
+    static let title: LocalizedStringKey = "Pencil haptics"
+    static let detail: LocalizedStringKey = "Apple Pencil Pro gives a light tap when a point snaps to a corner, a line or the grid."
+    /// Footer line for the Apple Pencil section: how to open the tool palette.
+    static let paletteHint: LocalizedStringKey = "Squeeze Apple Pencil Pro to open the tool palette at its tip."
+
+    static var isOn: Bool {
+        UserDefaults.standard.object(forKey: key) as? Bool ?? true
+    }
+}
+
 /// What a mouse drag does to the camera.
 enum MouseNav { case orbit, pan }
 

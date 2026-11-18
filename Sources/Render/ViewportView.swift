@@ -16,12 +16,23 @@ protocol ViewportInput: AnyObject {
     /// Right-click / long press: selects what is under `p` and returns the actions that fit it.
     func viewportContextMenu(at p: CGPoint) -> [ViewportMenuItem]
     func viewportKey(_ key: ViewportKey) -> Bool
+    /// Where the touch will probably be a frame from now (Apple Pencil, finger). Comes right after
+    /// `viewportDragMoved` with the real point. For live previews only: never place geometry here.
+    func viewportDragPredicted(_ p: CGPoint)
+    /// True while Apple Pencil handwriting (Scribble) may start over the 3D view, e.g. a dimension is being typed.
+    var viewportAcceptsHandwriting: Bool { get }
+}
+
+extension ViewportInput {
+    func viewportDragPredicted(_ p: CGPoint) {}
+    var viewportAcceptsHandwriting: Bool { false }
 }
 
 /// What touched the view. Pencil and pointer always draw in sketches; a finger may navigate instead.
 enum ViewportTouch { case finger, pencil, pointer }
 
 /// Pencil double-tap / squeeze, already mapped through the user's system preference.
+/// ("Show palette" preferences open `PencilPaletteState` directly.)
 enum PencilAction { case toggleSelect, previousTool }
 
 /// Plain keys only (no ⌘); arrows give the orbit direction.
@@ -35,26 +46,44 @@ struct ViewportMenuItem {
 
 #if os(iOS)
 import UIKit
+import UIKit.UIGestureRecognizerSubclass
 
-final class ViewportPlatformView: MTKView, UIGestureRecognizerDelegate, UIPencilInteractionDelegate {
+final class ViewportPlatformView: MTKView, UIGestureRecognizerDelegate, UIPencilInteractionDelegate, UIScribbleInteractionDelegate {
     weak var input: ViewportInput?
     var renderer: Renderer?
     private var toolDrag = false
     /// A right/middle-button pointer drag navigates the way the mouse preset says.
     private var pointerNav: MouseNav?
+    /// What the running navigation drag does, and what touched: for the fling when it ends.
+    private var dragNav: MouseNav = .orbit
+    private var dragTouch: ViewportTouch = .finger
     private var lastPan: CGPoint = .zero
     private var lastPinch: CGFloat = 1
+    /// The pinch zoomed during this two-finger gesture, so lifting the fingers doesn't fling a pan.
+    private var pinchZoomed = false
     /// Touch type of the last touch the finger/pointer recognizers received.
     private var lastTouchType: UITouch.TouchType = .direct
     /// A finger rested on the screen when the Pencil touched down: Pencil taps then extend the selection.
     private var fingerHeld = false
     private var holdUsed = false
     private var holdStart: CGPoint = .zero
+    /// The Pencil touch on the glass, for palm and finger rejection.
+    private weak var pencilTouch: UITouch?
+    /// Where the Pencil palette opens when the squeeze carries no hover position.
+    private var lastHover: CGPoint?
+    private var lastTouch: CGPoint?
+    private var hoverShown = false
     private var tap: UITapGestureRecognizer!
-    private var oneFinger: UIPanGestureRecognizer!
+    private var oneFinger: SamplingPanGestureRecognizer!
     private var twoFinger: UIPanGestureRecognizer!
     private var pencilTap: UITapGestureRecognizer!
+    private var pencilDrag: PencilDragGestureRecognizer!
     private var longPress: UILongPressGestureRecognizer!
+
+    /// A contact bigger than this (radius in points) is a resting palm, not a finger.
+    private static let palmRadius: CGFloat = 30
+    /// Pencil hover closer than this (0 = touching, 1 = farthest the iPad senses) shows the snap preview.
+    private static let hoverNear: CGFloat = 0.5
 
     override init(frame: CGRect, device: MTLDevice?) {
         super.init(frame: frame, device: device)
@@ -75,12 +104,15 @@ final class ViewportPlatformView: MTKView, UIGestureRecognizerDelegate, UIPencil
         addGestureRecognizer(tap)
 
         // The Pencil has its own recognizers, so a finger resting on the screen doesn't block them.
+        // None of them holds touches back: Pencil input reaches the sketch without delay.
         pencilTap = UITapGestureRecognizer(target: self, action: #selector(onPencilTap(_:)))
         pencilTap.allowedTouchTypes = [pencil]
+        pencilTap.delaysTouchesBegan = false
+        pencilTap.delaysTouchesEnded = false
         pencilTap.delegate = self
         addGestureRecognizer(pencilTap)
 
-        oneFinger = UIPanGestureRecognizer(target: self, action: #selector(onPrimaryPan(_:)))
+        oneFinger = SamplingPanGestureRecognizer(target: self, action: #selector(onPrimaryPan(_:)))
         oneFinger.minimumNumberOfTouches = 1
         oneFinger.maximumNumberOfTouches = 1
         oneFinger.allowedTouchTypes = [direct, pointer]
@@ -88,10 +120,13 @@ final class ViewportPlatformView: MTKView, UIGestureRecognizerDelegate, UIPencil
         oneFinger.delegate = self
         addGestureRecognizer(oneFinger)
 
-        let pencilPan = UIPanGestureRecognizer(target: self, action: #selector(onPencilPan(_:)))
-        pencilPan.maximumNumberOfTouches = 1
-        pencilPan.allowedTouchTypes = [pencil]
-        addGestureRecognizer(pencilPan)
+        // A Pencil drag starts after 4 pt instead of the pan recognizer's ~10 pt.
+        pencilDrag = PencilDragGestureRecognizer(target: self, action: #selector(onPencilDrag(_:)))
+        pencilDrag.allowedTouchTypes = [pencil]
+        pencilDrag.delaysTouchesBegan = false
+        pencilDrag.delaysTouchesEnded = false
+        pencilDrag.cancelsTouchesInView = false
+        addGestureRecognizer(pencilDrag)
 
         twoFinger = UIPanGestureRecognizer(target: self, action: #selector(onTwoFingerPan(_:)))
         twoFinger.minimumNumberOfTouches = 2
@@ -114,11 +149,13 @@ final class ViewportPlatformView: MTKView, UIGestureRecognizerDelegate, UIPencil
         let undo = UITapGestureRecognizer(target: self, action: #selector(onUndo))
         undo.numberOfTouchesRequired = 2
         undo.allowedTouchTypes = [direct]
+        undo.delegate = self  // palm rejection
         addGestureRecognizer(undo)
 
         let redo = UITapGestureRecognizer(target: self, action: #selector(onRedo))
         redo.numberOfTouchesRequired = 3
         redo.allowedTouchTypes = [direct]
+        redo.delegate = self
         addGestureRecognizer(redo)
 
         // Long press (finger) and right-click (pointer) select what's under them; the context bar follows.
@@ -140,9 +177,13 @@ final class ViewportPlatformView: MTKView, UIGestureRecognizerDelegate, UIPencil
         let pencilUI = UIPencilInteraction()
         pencilUI.delegate = self
         addInteraction(pencilUI)
+
+        // Pencil strokes on the 3D view draw; they turn into handwriting only while a dimension is typed.
+        addInteraction(UIScribbleInteraction(delegate: self))
     }
 
     func gestureRecognizer(_ g: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+        if rejectsFinger(touch) { return false }
         if g === tap || g === oneFinger { lastTouchType = touch.type }
         return true
     }
@@ -150,15 +191,37 @@ final class ViewportPlatformView: MTKView, UIGestureRecognizerDelegate, UIPencil
     func gestureRecognizer(_ g: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith other: UIGestureRecognizer) -> Bool {
         // Two-finger pan and pinch work together; a held finger doesn't block the Pencil or an orbit.
         if (g is UIPinchGestureRecognizer && other === twoFinger) || (g === twoFinger && other is UIPinchGestureRecognizer) { return true }
-        if g === longPress || other === longPress { return other === pencilTap || g === pencilTap || other === oneFinger || g === oneFinger }
+        let withHold: [UIGestureRecognizer] = [pencilTap, pencilDrag, oneFinger]
+        if g === longPress { return withHold.contains { $0 === other } }
+        if other === longPress { return withHold.contains { $0 === g } }
+        return false
+    }
+
+    // MARK: Palm and finger rejection
+
+    private func isPalm(_ t: UITouch) -> Bool { t.type == .direct && t.majorRadius > Self.palmRadius }
+
+    /// When only the Pencil draws: a palm, or a finger that lands while the Pencil is on the glass, is ignored.
+    private func rejectsFinger(_ t: UITouch) -> Bool {
+        guard t.type == .direct, PencilDrawing.isActive else { return false }
+        if isPalm(t) { return true }
+        if let p = pencilTouch, p.phase != .ended, p.phase != .cancelled { return true }
         return false
     }
 
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         if !isFirstResponder { becomeFirstResponder() }
-        if touches.contains(where: { $0.type == .pencil }) {
+        Haptics.canvasView = self
+        let real = touches.filter { !isPalm($0) }
+        if !real.isEmpty { renderer?.stopInertia() }  // any touch-down catches a spinning view
+        if let t = real.first { lastTouch = t.location(in: self) }
+        if let p = touches.first(where: { $0.type == .pencil }) {
             PencilDrawing.pencilSeen = true
-            fingerHeld = event?.allTouches?.contains { $0.type == .direct && $0.phase != .ended && $0.phase != .cancelled } ?? false
+            pencilTouch = p
+            fingerHeld = event?.allTouches?.contains {
+                $0.type == .direct && !isPalm($0) && $0.phase != .ended && $0.phase != .cancelled
+            } ?? false
+            Haptics.prepare()
         }
         super.touchesBegan(touches, with: event)
     }
@@ -175,38 +238,74 @@ final class ViewportPlatformView: MTKView, UIGestureRecognizerDelegate, UIPencil
         input?.viewportTap(g.location(in: self), extend: held || g.modifierFlags.contains(.shift), touch: .pencil)
     }
 
-    @objc private func onPrimaryPan(_ g: UIPanGestureRecognizer) {
-        if g.state == .began {
-            holdUsed = true
-            pointerNav = currentTouch == .pointer ? navigation(buttons: g.buttonMask, flags: g.modifierFlags) : nil
-        }
-        drag(g, touch: currentTouch)
-    }
+    // MARK: Drags
 
-    @objc private func onPencilPan(_ g: UIPanGestureRecognizer) {
-        if g.state == .began { pointerNav = nil }
-        drag(g, touch: .pencil)
-    }
-
-    private func drag(_ g: UIPanGestureRecognizer, touch: ViewportTouch) {
-        let p = g.location(in: self)
+    @objc private func onPrimaryPan(_ g: SamplingPanGestureRecognizer) {
+        let p = g.precisePoint ?? g.location(in: self)
         switch g.state {
         case .began:
-            let start = CGPoint(x: p.x - g.translation(in: self).x, y: p.y - g.translation(in: self).y)
-            toolDrag = pointerNav == nil && (input?.viewportDragBegan(start, touch: touch) ?? false)
-            if toolDrag { input?.viewportDragMoved(p) }
-            lastPan = p
+            holdUsed = true
+            pointerNav = currentTouch == .pointer ? navigation(buttons: g.buttonMask, flags: g.modifierFlags) : nil
+            let loc = g.location(in: self), t = g.translation(in: self)
+            beginDrag(from: CGPoint(x: loc.x - t.x, y: loc.y - t.y), to: p, touch: currentTouch)
         case .changed:
-            if toolDrag { input?.viewportDragMoved(p) } else {
-                let nav = pointerNav ?? (g.modifierFlags.contains(.shift) ? .pan : .orbit)
-                navigate(nav, dx: p.x - lastPan.x, dy: p.y - lastPan.y)
-            }
-            lastPan = p
+            moveDrag(to: p, predicted: g.predictedPoint, shift: g.modifierFlags.contains(.shift))
+        case .ended:
+            endDrag(at: p, velocity: g.velocity(in: self))
         default:
-            if toolDrag { input?.viewportDragEnded(p) }
-            toolDrag = false
-            pointerNav = nil
+            endDrag(at: p, velocity: nil)
         }
+    }
+
+    @objc private func onPencilDrag(_ g: PencilDragGestureRecognizer) {
+        let p = g.precisePoint ?? g.location(in: self)
+        switch g.state {
+        case .began:
+            pointerNav = nil
+            beginDrag(from: g.startPoint, to: p, touch: .pencil)
+        case .changed:
+            moveDrag(to: p, predicted: g.predictedPoint, shift: g.modifierFlags.contains(.shift))
+        case .ended:
+            endDrag(at: p, velocity: g.releaseVelocity)
+        default:
+            endDrag(at: p, velocity: nil)
+        }
+    }
+
+    private func beginDrag(from start: CGPoint, to p: CGPoint, touch: ViewportTouch) {
+        renderer?.stopInertia()
+        dragTouch = touch
+        dragNav = pointerNav ?? .orbit
+        toolDrag = pointerNav == nil && (input?.viewportDragBegan(start, touch: touch) ?? false)
+        if toolDrag { input?.viewportDragMoved(p) }
+        lastPan = p
+    }
+
+    /// `p` is the newest coalesced sample (sub-point precise); `predicted` only moves the preview.
+    private func moveDrag(to p: CGPoint, predicted: CGPoint?, shift: Bool) {
+        if toolDrag {
+            input?.viewportDragMoved(p)
+            if let predicted { input?.viewportDragPredicted(predicted) }
+        } else {
+            dragNav = pointerNav ?? (shift ? .pan : .orbit)
+            navigate(dragNav, dx: p.x - lastPan.x, dy: p.y - lastPan.y)
+        }
+        lastPan = p
+    }
+
+    private func endDrag(at p: CGPoint, velocity: CGPoint?) {
+        if toolDrag {
+            input?.viewportDragEnded(p)
+        } else if let v = velocity, dragTouch != .pointer {
+            // A flick keeps the view turning (or sliding) and slows down; the next touch stops it.
+            // Mouse drags stop dead, as on the Mac.
+            switch dragNav {
+            case .orbit: renderer?.flingOrbit(velocity: v)
+            case .pan: renderer?.flingPan(velocity: v, size: bounds.size)
+            }
+        }
+        toolDrag = false
+        pointerNav = nil
     }
 
     /// Right and middle mouse buttons on iPad, when the pointer reports them.
@@ -227,14 +326,21 @@ final class ViewportPlatformView: MTKView, UIGestureRecognizerDelegate, UIPencil
 
     @objc private func onTwoFingerPan(_ g: UIPanGestureRecognizer) {
         let p = g.location(in: self)
-        if g.state == .began { lastPan = p }
-        if g.state == .changed {
+        switch g.state {
+        case .began:
+            pinchZoomed = false
+        case .changed:
             renderer?.camera.pan(dx: p.x - lastPan.x, dy: p.y - lastPan.y, size: bounds.size)
+        case .ended:
+            if !pinchZoomed { renderer?.flingPan(velocity: g.velocity(in: self), size: bounds.size) }
+        default:
+            break
         }
         lastPan = p
     }
 
     @objc private func onScroll(_ g: UIPanGestureRecognizer) {
+        if g.state == .began { renderer?.stopInertia() }
         let t = g.translation(in: self)
         g.setTranslation(.zero, in: self)
         if g.modifierFlags.contains(.shift) {
@@ -250,6 +356,7 @@ final class ViewportPlatformView: MTKView, UIGestureRecognizerDelegate, UIPencil
             let f = lastPinch / max(g.scale, 0.01)
             renderer?.camera.zoom(factor: Double(f), at: g.location(in: self), size: bounds.size)
             lastPinch = g.scale
+            if abs(g.scale - 1) > 0.08 { pinchZoomed = true }
         }
     }
 
@@ -276,10 +383,27 @@ final class ViewportPlatformView: MTKView, UIGestureRecognizerDelegate, UIPencil
         _ = input?.viewportContextMenu(at: g.location(in: self))
     }
 
+    // MARK: Hover
+
     @objc private func onHover(_ g: UIHoverGestureRecognizer) {
         switch g.state {
-        case .began, .changed: input?.viewportHover(g.location(in: self))
-        default: input?.viewportHover(nil)
+        case .began, .changed:
+            let p = g.location(in: self)
+            lastHover = p
+            // The iPad senses the Pencil up to about 12 mm above the glass; snaps preview only when the tip is
+            // close, so they don't flicker while the hand hovers far away. The pointer reports zOffset 0.
+            if g.zOffset <= Self.hoverNear {
+                if !hoverShown { Haptics.prepare() }
+                hoverShown = true
+                input?.viewportHover(p)
+            } else if hoverShown {
+                hoverShown = false
+                input?.viewportHover(nil)
+            }
+        default:
+            lastHover = nil
+            hoverShown = false
+            input?.viewportHover(nil)
         }
     }
 
@@ -290,6 +414,7 @@ final class ViewportPlatformView: MTKView, UIGestureRecognizerDelegate, UIPencil
         switch UIPencilInteraction.preferredTapAction {
         case .ignore: return
         case .switchPrevious: input?.viewportPencil(.previousTool)
+        case .showColorPalette, .showContextualPalette: togglePalette(at: tap.hoverPose?.location)
         default: input?.viewportPencil(.toggleSelect)
         }
     }
@@ -299,8 +424,26 @@ final class ViewportPlatformView: MTKView, UIGestureRecognizerDelegate, UIPencil
         PencilDrawing.pencilSeen = true
         switch UIPencilInteraction.preferredSqueezeAction {
         case .ignore, .runSystemShortcut: return
-        default: input?.viewportPencil(.previousTool)
+        case .showContextualPalette: togglePalette(at: squeeze.hoverPose?.location)
+        default:
+            if PencilPaletteState.shared.isShown { PencilPaletteState.shared.dismiss(); return }
+            input?.viewportPencil(.previousTool)
         }
+    }
+
+    /// Opens the tool palette at the Pencil tip (or where the Pencil last hovered or touched); closes it if open.
+    private func togglePalette(at hover: CGPoint?) {
+        let palette = PencilPaletteState.shared
+        if palette.isShown { palette.dismiss(); return }
+        let p = hover ?? lastHover ?? lastTouch ?? CGPoint(x: bounds.midX, y: bounds.midY)
+        palette.show(at: convert(p, to: nil), for: input)
+        Haptics.tick()
+    }
+
+    // MARK: Scribble
+
+    func scribbleInteraction(_ interaction: UIScribbleInteraction, shouldBeginAt location: CGPoint) -> Bool {
+        input?.viewportAcceptsHandwriting ?? false
     }
 
     // MARK: Keyboard
@@ -310,7 +453,10 @@ final class ViewportPlatformView: MTKView, UIGestureRecognizerDelegate, UIPencil
     /// Take the keyboard as soon as the view is on screen, so letter keys work without tapping it first.
     override func didMoveToWindow() {
         super.didMoveToWindow()
-        if window != nil { DispatchQueue.main.async { [weak self] in self?.becomeFirstResponder() } }
+        if window != nil {
+            Haptics.canvasView = self
+            DispatchQueue.main.async { [weak self] in self?.becomeFirstResponder() }
+        }
     }
 
     override func pressesBegan(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
@@ -361,6 +507,110 @@ struct ViewportRepresentable: UIViewRepresentable {
     }
 }
 
+/// The newest precise location of a touch (its last coalesced sample) and where UIKit predicts it next.
+@MainActor
+private func touchSamples(_ t: UITouch, _ event: UIEvent, in view: UIView?) -> (latest: CGPoint, predicted: CGPoint?) {
+    let latest = event.coalescedTouches(for: t)?.last ?? t
+    let predicted = event.predictedTouches(for: t)?.last
+    return (latest.preciseLocation(in: view), predicted?.preciseLocation(in: view))
+}
+
+/// A pan recognizer that also keeps the newest coalesced and predicted location of its touch.
+final class SamplingPanGestureRecognizer: UIPanGestureRecognizer {
+    private(set) var precisePoint: CGPoint?
+    private(set) var predictedPoint: CGPoint?
+
+    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent) {
+        if let t = touches.first {
+            let s = touchSamples(t, event, in: view)
+            precisePoint = s.latest
+            predictedPoint = s.predicted
+        }
+        super.touchesMoved(touches, with: event)  // the action runs after this, with the fresh samples
+    }
+
+    override func reset() {
+        super.reset()
+        precisePoint = nil
+        predictedPoint = nil
+    }
+}
+
+/// Apple Pencil drags: begin after `threshold` points (the pan recognizer waits for about 10), keep the coalesced
+/// and predicted samples, and measure the release speed for a fling.
+final class PencilDragGestureRecognizer: UIGestureRecognizer {
+    var threshold: CGFloat = 4
+    private(set) var startPoint: CGPoint = .zero
+    private(set) var precisePoint: CGPoint?
+    private(set) var predictedPoint: CGPoint?
+    /// Points per second when the Pencil lifted; zero if it rested before lifting.
+    private(set) var releaseVelocity: CGPoint = .zero
+    private weak var tracked: UITouch?
+    private var samples: [(point: CGPoint, time: TimeInterval)] = []
+
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent) {
+        super.touchesBegan(touches, with: event)
+        guard tracked == nil, let t = touches.first else { return }
+        tracked = t
+        startPoint = t.preciseLocation(in: view)
+        precisePoint = startPoint
+        predictedPoint = nil
+        samples = [(startPoint, t.timestamp)]
+    }
+
+    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent) {
+        super.touchesMoved(touches, with: event)
+        guard let t = tracked, touches.contains(t) else { return }
+        for c in event.coalescedTouches(for: t) ?? [t] { samples.append((c.preciseLocation(in: view), c.timestamp)) }
+        let now = t.timestamp
+        samples.removeAll { now - $0.time > 0.1 }
+        let s = touchSamples(t, event, in: view)
+        precisePoint = s.latest
+        predictedPoint = s.predicted
+        switch state {
+        case .possible:
+            if hypot(s.latest.x - startPoint.x, s.latest.y - startPoint.y) >= threshold { state = .began }
+        case .began, .changed:
+            state = .changed
+        default:
+            break
+        }
+    }
+
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent) {
+        super.touchesEnded(touches, with: event)
+        guard let t = tracked, touches.contains(t) else { return }
+        precisePoint = t.preciseLocation(in: view)
+        predictedPoint = nil
+        releaseVelocity = velocity(at: t.timestamp)
+        state = (state == .began || state == .changed) ? .ended : .failed
+    }
+
+    override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent) {
+        super.touchesCancelled(touches, with: event)
+        guard let t = tracked, touches.contains(t) else { return }
+        predictedPoint = nil
+        state = (state == .began || state == .changed) ? .cancelled : .failed
+    }
+
+    override func reset() {
+        super.reset()
+        tracked = nil
+        precisePoint = nil
+        predictedPoint = nil
+        releaseVelocity = .zero
+        samples = []
+    }
+
+    /// Average speed over the last 100 ms of samples.
+    private func velocity(at time: TimeInterval) -> CGPoint {
+        guard let last = samples.last, let first = samples.first, time - last.time < 0.05 else { return .zero }
+        let dt = last.time - first.time
+        guard dt > 0.008 else { return .zero }
+        return CGPoint(x: (last.point.x - first.point.x) / dt, y: (last.point.y - first.point.y) / dt)
+    }
+}
+
 #else
 import AppKit
 
@@ -381,6 +631,7 @@ final class ViewportPlatformView: MTKView {
 
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
+        if window != nil { Haptics.canvasView = self }
         DispatchQueue.main.async { [weak self] in
             guard let self, let w = self.window, !(w.firstResponder is NSTextView) else { return }
             w.makeFirstResponder(self)
@@ -401,6 +652,7 @@ final class ViewportPlatformView: MTKView {
 
     override func mouseDown(with e: NSEvent) {
         window?.makeFirstResponder(self)
+        renderer?.stopInertia()
         downPoint = point(e); last = point(e); dragging = false; toolDrag = false
     }
 
@@ -425,6 +677,7 @@ final class ViewportPlatformView: MTKView {
 
     override func rightMouseDown(with e: NSEvent) {
         window?.makeFirstResponder(self)
+        renderer?.stopInertia()
         rightDown = point(e); last = point(e); rightDragging = false
     }
 
@@ -443,6 +696,7 @@ final class ViewportPlatformView: MTKView {
     }
 
     override func otherMouseDown(with e: NSEvent) {
+        renderer?.stopInertia()
         last = point(e)
         let f = e.modifierFlags
         otherNav = e.buttonNumber == 2 ? MousePreset.current.middle(shift: f.contains(.shift), control: f.contains(.control)) : .pan
@@ -475,7 +729,8 @@ final class ViewportPlatformView: MTKView {
 
     override func scrollWheel(with e: NSEvent) {
         if e.hasPreciseScrollingDeltas {
-            // Trackpad: two fingers orbit, with shift they pan.
+            // Trackpad: two fingers orbit, with shift they pan. Direct: macOS adds its own momentum events.
+            if e.phase == .began { renderer?.stopInertia() }
             if e.modifierFlags.contains(.shift) {
                 renderer?.camera.pan(dx: -e.scrollingDeltaX, dy: -e.scrollingDeltaY, size: bounds.size)
             } else if e.modifierFlags.contains(.command) || e.modifierFlags.contains(.option) {
@@ -484,8 +739,8 @@ final class ViewportPlatformView: MTKView {
                 renderer?.camera.orbit(dx: -e.scrollingDeltaX, dy: -e.scrollingDeltaY)
             }
         } else {
-            // Mouse wheel zooms towards the cursor.
-            renderer?.camera.zoom(factor: exp(Double(-e.scrollingDeltaY) * 0.08), at: point(e), size: bounds.size)
+            // Mouse wheel zooms towards the cursor; each notch eases in instead of jumping.
+            renderer?.animateZoom(factor: exp(Double(-e.scrollingDeltaY) * 0.08), at: point(e), size: bounds.size)
         }
     }
 

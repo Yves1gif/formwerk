@@ -98,7 +98,13 @@ struct Camera: Equatable {
 
     /// Zooms by `factor` (< 1 = closer) towards the point under the cursor.
     mutating func zoom(factor: Double, at point: CGPoint?, size: CGSize) {
-        let f = min(max(factor, 0.2), 5)
+        guard factor.isFinite, factor > 0 else { return }
+        // Clamp the distance first and move the target only by the zoom that really happens,
+        // so zooming against the near/far limit doesn't keep sliding the view sideways.
+        let wanted = min(max(factor, 0.2), 5)
+        let newDistance = min(max(distance * wanted, 1), 20000)
+        let f = newDistance / distance
+        guard abs(f - 1) > 1e-12 else { return }
         if let point {
             let (o, d) = ray(at: point, size: size)
             let plane = Plane(origin: target, normal: forward, xDir: right)
@@ -107,7 +113,7 @@ struct Camera: Equatable {
                 target += (hit - target) * (1 - f)
             }
         }
-        distance = min(max(distance * f, 1), 20000)
+        distance = newDistance
     }
 
     /// Frames a bounding box.
@@ -134,16 +140,44 @@ struct Camera: Equatable {
         target -= plane.normal * plane.signedDistance(target)
     }
 
+    /// Where the camera looks from, without position: what the view cube shows.
+    var orientation: CameraOrientation { CameraOrientation(yaw: yaw, pitch: pitch, orthographic: orthographic) }
+
+    /// Ease-in-out (cubic): starts and lands softly, quicker in the middle than smoothstep.
+    static func ease(_ t: Double) -> Double {
+        let t = min(max(t, 0), 1)
+        return t < 0.5 ? 4 * t * t * t : 1 - pow(-2 * t + 2, 3) / 2
+    }
+
     static func interpolate(_ a: Camera, _ b: Camera, _ t: Double) -> Camera {
         var c = b
-        let s = t * t * (3 - 2 * t)
+        let s = ease(t)
         c.target = a.target + (b.target - a.target) * s
-        c.distance = a.distance + (b.distance - a.distance) * s
+        // Distance in log space: zooming from 20 to 2000 mm feels even instead of rushing at the start.
+        let da = max(a.distance, 1e-6), db = max(b.distance, 1e-6)
+        c.distance = da * pow(db / da, s)
         var dyaw = b.yaw - a.yaw
         while dyaw > .pi { dyaw -= 2 * .pi }
         while dyaw < -.pi { dyaw += 2 * .pi }
         c.yaw = a.yaw + dyaw * s
         c.pitch = a.pitch + (b.pitch - a.pitch) * s
+        c.fovY = a.fovY + (b.fovY - a.fovY) * s
+        c.orthographic = s < 0.5 ? a.orthographic : b.orthographic
+        return c
+    }
+}
+
+/// The camera's turn and tilt only (published once per frame for the view cube).
+struct CameraOrientation: Equatable {
+    var yaw: Double = Camera().yaw
+    var pitch: Double = Camera().pitch
+    var orthographic = false
+
+    /// A camera with this orientation, for its `right`, `up` and `direction` vectors.
+    var camera: Camera {
+        var c = Camera()
+        c.yaw = yaw
+        c.pitch = pitch
         return c
     }
 }

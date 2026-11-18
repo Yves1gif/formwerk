@@ -25,8 +25,9 @@ extension EditorModel {
     func editSketch(_ id: UUID) {
         guard let f = design.feature(id), let sf = f.sketch else { return }
         tool = nil
-        let plane = output.sketches[id]?.plane ?? planeFor(sf.plane)
+        let plane = output.sketches[id]?.plane ?? planeFor(sf.plane).offset(by: sf.planeOffset ?? 0)
         var s = SketchSession(featureID: id, isNew: false, planeRef: sf.plane, plane: plane, sketch: sf.sketch)
+        s.faceOffset = sf.planeOffset ?? 0
         s.tool = .select
         s.solve = SketchSolver.solve(sf.sketch)
         s.cameraBefore = renderer?.camera
@@ -49,10 +50,33 @@ extension EditorModel {
     func setSketchPlane(_ p: OriginPlane) {
         guard var s = sketch, s.isNew, s.isEmpty else { return }
         s.planeRef = .origin(p, offset: 0)
+        s.faceOffset = 0
         s.plane = p.plane
         s.modelSnaps = modelSnapPoints(on: s.plane)
         sketch = s
         lookAt(s.plane)
+    }
+
+    /// How far the sketch plane sits from its origin plane or face (for the inspector's "Offset" field).
+    var sketchPlaneOffset: Double {
+        guard let s = sketch else { return 0 }
+        if case .origin(_, let o) = s.planeRef { return o }
+        return s.faceOffset
+    }
+
+    /// Moves the sketch plane along its normal: "sketch 5 mm above the ground / this face".
+    /// Works for new and existing sketches; the drawing keeps its 2D coordinates.
+    func setSketchPlaneOffset(_ d: Double) {
+        guard var s = sketch, d.isFinite else { return }
+        let old = sketchPlaneOffset
+        guard abs(d - old) > 1e-9 else { return }
+        switch s.planeRef {
+        case .origin(let p, _): s.planeRef = .origin(p, offset: d)
+        case .face: s.faceOffset = d
+        }
+        s.plane = s.plane.offset(by: d - old)
+        s.modelSnaps = modelSnapPoints(on: s.plane)
+        sketch = s
     }
 
     private func lookAt(_ plane: Plane) {
@@ -71,10 +95,16 @@ extension EditorModel {
         if s.isNew {
             if finalSketch.curves.isEmpty { cancelSketch(); return }
             d.features.append(Feature(id: s.featureID, name: d.nextName(for: .sketch),
-                                      operation: .sketch(SketchFeature(plane: s.planeRef, sketch: finalSketch))))
+                                      operation: .sketch(SketchFeature(plane: s.planeRef, sketch: finalSketch,
+                                                                       planeOffset: s.faceOffset != 0 ? s.faceOffset : nil))))
         } else {
             d.update(s.featureID) { f in
-                if case .sketch(var sf) = f.operation { sf.sketch = finalSketch; f.operation = .sketch(sf) }
+                if case .sketch(var sf) = f.operation {
+                    sf.sketch = finalSketch
+                    sf.plane = s.planeRef
+                    sf.planeOffset = s.faceOffset != 0 ? s.faceOffset : nil
+                    f.operation = .sketch(sf)
+                }
             }
         }
         let id = s.featureID
@@ -94,12 +124,22 @@ extension EditorModel {
         guard let s = sketch else { refreshScene(); return }
         let regions = SketchRegions.find(in: s.sketch)
         if regions != s.regions {
-            sketch?.regions = regions
+            // A user edit that closed a new area: a small "done" buzz.
+            if s.regionHapticPending && regions.count > s.regions.count { Haptics.success() }
+            var n = s
+            n.regions = regions
+            n.regionHapticPending = false
+            sketch = n
             let plane = s.plane
             worker.regionTriangles(regions, plane: plane) { [weak self] fills in
                 guard let self, self.sketch?.regions == regions else { return }
                 self.sketch?.regionFills = fills
             }
+            return  // the assignment above triggers another refresh
+        }
+        if s.regionHapticPending {
+            // The edit didn't change the areas; forget it so a later drag or undo doesn't buzz.
+            sketch?.regionHapticPending = false
             return  // the assignment above triggers another refresh
         }
         refreshScene()
@@ -124,6 +164,9 @@ extension EditorModel {
         s.undoStack.append(before)
         if s.undoStack.count > 200 { s.undoStack.removeFirst() }
         s.redoStack = []
+        s.offsetEdit = nil
+        s.trimPreview = []
+        s.regionHapticPending = true
         sketch = s
     }
 
@@ -133,6 +176,7 @@ extension EditorModel {
         s.sketch = prev
         s.solve = SketchSolver.solve(prev)
         s.clicks = []; s.chainStart = nil; s.selected = []
+        s.offsetEdit = nil; s.trimPreview = []; s.mirrorSource = []
         sketch = s
     }
 
@@ -141,6 +185,7 @@ extension EditorModel {
         s.undoStack.append(s.sketch)
         s.sketch = next
         s.solve = SketchSolver.solve(next)
+        s.offsetEdit = nil; s.trimPreview = []; s.mirrorSource = []
         sketch = s
     }
 
@@ -151,7 +196,10 @@ extension EditorModel {
         s.tool = t
         s.clicks = []
         s.chainStart = nil
-        if t != .select && t != .dimension { s.selected = [] }
+        s.trimPreview = []
+        s.cursor = nil
+        if t != .mirror { s.mirrorSource = [] }
+        if t != .select && t != .dimension && t != .mirror { s.selected = [] }
         sketch = s
     }
 
@@ -162,6 +210,7 @@ extension EditorModel {
             s.clicks = []; s.chainStart = nil
         } else if !s.selected.isEmpty {
             s.selected = []
+            s.mirrorSource = []
         } else if s.tool != .select {
             s.previousTool = s.tool
             s.tool = .select
@@ -186,7 +235,10 @@ extension EditorModel {
     func toggleConstruction() {
         guard let s = sketch else { return }
         let ids = s.selected.compactMap { if case .curve(let c) = $0 { return c } else { return nil } }
-        guard !ids.isEmpty else { return }
+        guard !ids.isEmpty else {
+            show(String(localized: "Select lines or circles first."))
+            return
+        }
         changeSketch({ sk in
             for i in sk.curves.indices where ids.contains(sk.curves[i].id) { sk.curves[i].construction.toggle() }
         }, solve: false)
@@ -312,6 +364,12 @@ extension EditorModel {
             sketch = s
         case .dimension:
             dimensionTap(screen)
+        case .trim:
+            trimTap(screen)
+        case .fillet:
+            cornerTap(screen)
+        case .mirror:
+            mirrorTap(screen)
         default:
             guard let snap = snap(screen) else { return }
             drawClick(snap)
@@ -326,12 +384,60 @@ extension EditorModel {
 
     func sketchHover(_ screen: CGPoint?) {
         guard var s = sketch else { return }
-        if let screen, s.tool != .select && s.tool != .dimension {
-            s.cursor = snap(screen)
+        if s.tool == .trim {
+            // Show the piece a tap would remove.
+            var piece: [Vec2] = []
+            if let screen, let p = planePoint(screen), let id = nearestCurve(screen),
+               let plan = SketchEdit.trimPlan(s.sketch, curve: id, near: p) {
+                piece = plan.removedPiece
+            }
+            if piece != s.trimPreview || s.cursor != nil { s.trimPreview = piece; s.cursor = nil; sketch = s }
+            return
+        }
+        if let screen, s.tool != .select && s.tool != .dimension && !s.tool.isModifyTool {
+            s.cursor = inferredCursor(snap(screen), in: s)
         } else {
             s.cursor = nil
         }
-        if s.cursor != sketch?.cursor { sketch = s }
+        if s.cursor != sketch?.cursor {
+            s.lastSnapTarget = snapFeedback(s.cursor, previous: s.lastSnapTarget, screen: screen)
+            sketch = s
+        }
+    }
+
+    /// While drawing a line, a nearly horizontal or vertical direction shows as exactly that
+    /// (the click applies the same rule and adds the constraint).
+    private func inferredCursor(_ snap: SketchSnap?, in s: SketchSession) -> SketchSnap? {
+        guard var c = snap, s.tool == .line, let start = s.chainStart, c.pointID == nil else { return snap }
+        let startPos = s.sketch.position(start)
+        let d = c.position - startPos
+        let ang = abs(atan2(d.y, d.x))
+        if ang < 0.05 || abs(ang - .pi) < 0.05 { c.position.y = startPos.y }
+        else if abs(ang - .pi / 2) < 0.05 { c.position.x = startPos.x }
+        return c
+    }
+
+    /// A name for what the cursor snapped to; plays a haptic tick when it changes to a new target.
+    private func snapFeedback(_ cursor: SketchSnap?, previous: String?, screen: CGPoint?) -> String? {
+        var target: String? = nil
+        if let c = cursor {
+            switch c.kind {
+            case .point, .origin: target = "p\(c.pointID ?? -1)"
+            case .model: target = "m\(Int((c.position.x * 1000).rounded())),\(Int((c.position.y * 1000).rounded()))"
+            case .curve(let id): target = "c\(id)"
+            case .midpoint(let id): target = "mid\(id)"
+            case .grid, .free:
+                // Horizontal / vertical inference while drawing a line.
+                if let s = sketch, s.tool == .line, let start = s.chainStart {
+                    let d = c.position - s.sketch.position(start)
+                    if d.length > 1e-9 {
+                        if abs(d.y) < 1e-9 { target = "h" } else if abs(d.x) < 1e-9 { target = "v" }
+                    }
+                }
+            }
+        }
+        if let target, target != previous { Haptics.snap(at: screen, in: nil) }
+        return target
     }
 
     func sketchDragBegan(_ screen: CGPoint, touch: ViewportTouch) -> Bool {
@@ -357,7 +463,7 @@ extension EditorModel {
                 return false
             }
         }
-        if s.tool == .dimension { return false }
+        if s.tool == .dimension || s.tool.isModifyTool { return false }
         // Drawing by dragging: press = first point, release = next point. Pencil and mouse always draw;
         // a finger draws only when it starts on the sketch's own geometry or a tool is mid-action.
         if touch == .finger && s.clicks.isEmpty && s.chainStart == nil && hitSketchItem(screen) == nil { return false }
@@ -396,7 +502,8 @@ extension EditorModel {
             }
             sketch = s
         case .sketchDraw:
-            s.cursor = snap(screen)
+            s.cursor = inferredCursor(snap(screen), in: s)
+            s.lastSnapTarget = snapFeedback(s.cursor, previous: s.lastSnapTarget, screen: screen)
             sketch = s
         case .handle:
             break
@@ -411,6 +518,7 @@ extension EditorModel {
             guard var s = sketch, s.sketch != before else { return }
             s.undoStack.append(before)
             s.redoStack = []
+            s.offsetEdit = nil
             sketch = s
         case .sketchDraw(let start):
             guard let end = snap(screen) else { return }
@@ -587,9 +695,157 @@ extension EditorModel {
         case .point:
             changeSketch { sk in _ = self.pointID(for: snap, in: &sk) }
 
-        case .select, .dimension:
+        case .select, .dimension, .trim, .fillet, .mirror:
             break
         }
+    }
+
+    // MARK: - Modify tools (trim, round corner, offset, mirror)
+
+    /// The curve closest to a screen point (ignores points, unlike `hitSketchItem`).
+    func nearestCurve(_ screen: CGPoint) -> Int? {
+        guard let s = sketch, let p = planePoint(screen) else { return nil }
+        let tol = sketchTolerance * 14
+        var best: (Int, Double)? = nil
+        for c in s.sketch.curves {
+            let d = s.sketch.distance(from: p, to: c)
+            if d < tol && (best == nil || d < best!.1) { best = (c.id, d) }
+        }
+        return best?.0
+    }
+
+    /// Trim: removes the tapped piece of a curve between its crossings.
+    private func trimTap(_ screen: CGPoint) {
+        guard let s = sketch, let p = planePoint(screen) else { return }
+        guard let id = nearestCurve(screen), let trimmed = SketchEdit.trim(s.sketch, curve: id, near: p) else {
+            show(String(localized: "Tap the piece of a line or circle you want to remove."))
+            return
+        }
+        changeSketch { $0 = trimmed }
+        sketch?.selected = []
+    }
+
+    /// Round corner: the corner nearest to the tap.
+    private func cornerTap(_ screen: CGPoint) {
+        guard let s = sketch, let p = planePoint(screen) else { return }
+        let tol = sketchTolerance * 22
+        let corner = s.sketch.points
+            .filter { SketchEdit.corner(s.sketch, at: $0.id) != nil }
+            .min { ($0.position - p).length < ($1.position - p).length }
+        guard let corner, (corner.position - p).length < tol else {
+            show(String(localized: "Tap a corner where two lines meet."))
+            return
+        }
+        roundSketchCorner(corner.id)
+    }
+
+    /// Rounds a corner with the last radius (smaller if it doesn't fit) and opens the radius for typing.
+    func roundSketchCorner(_ pid: Int) {
+        guard let s = sketch else { return }
+        guard let corner = SketchEdit.corner(s.sketch, at: pid) else {
+            show(String(localized: "Tap a corner where two lines meet."))
+            return
+        }
+        var r = s.cornerRadius
+        if r >= corner.maxRadius * 0.95 {
+            // A round number that fits comfortably.
+            let v = corner.maxRadius * 0.5
+            let step = v >= 2 ? 0.5 : 0.1
+            let rounded = (v / step).rounded(.down) * step
+            r = rounded > 0 ? rounded : v
+        }
+        switch SketchEdit.roundCorner(s.sketch, at: pid, radius: r) {
+        case .success(let result):
+            changeSketch { $0 = result.sketch }
+            sketch?.selected = []
+            sketch?.editingDimension = result.dimension
+        case .failure:
+            show(String(localized: "The lines are too short for a round corner here."), kind: .error)
+        }
+    }
+
+    /// Offset: copies the selected shape at a distance (outwards for closed shapes).
+    /// One selected line or arc takes its whole connected outline.
+    func offsetSketchSelection() {
+        guard let s = sketch else { return }
+        var ids = s.selected.compactMap { if case .curve(let c) = $0 { return c } else { return nil } }.sorted()
+        guard !ids.isEmpty else {
+            show(String(localized: "Select a shape first, then tap Offset."))
+            return
+        }
+        if ids.count == 1 {
+            let connected = SketchEdit.connectedCurves(s.sketch, from: ids[0])
+            if SketchEdit.chain(s.sketch, curves: connected) != nil { ids = connected }
+        }
+        applyOffset(sources: ids, distance: s.offsetDistance, before: s.sketch, isNew: true)
+    }
+
+    /// The offset distance (inspector field). Changing it right after an offset redoes that offset.
+    func setOffsetDistance(_ d: Double) {
+        guard let s = sketch, d.isFinite, abs(d) > 1e-6 else { return }
+        if let edit = s.offsetEdit {
+            applyOffset(sources: edit.sources, distance: d, before: edit.before, isNew: false)
+        } else {
+            sketch?.offsetDistance = d
+        }
+    }
+
+    func flipOffsetSide() {
+        guard let s = sketch else { return }
+        setOffsetDistance(-s.offsetDistance)
+    }
+
+    private func applyOffset(sources: [Int], distance: Double, before: Sketch, isNew: Bool) {
+        switch SketchEdit.offset(before, curves: sources, distance: distance) {
+        case .failure(let f):
+            show(f == .tooBig
+                 ? String(localized: "The offset is too big for this shape.")
+                 : String(localized: "Select one closed shape or a chain of connected lines."), kind: .error)
+        case .success(let result):
+            if isNew {
+                changeSketch { $0 = result.sketch }
+            } else if var s = sketch {
+                // Replaces the previous offset; the undo step from the first offset stays.
+                let r = SketchSolver.solve(result.sketch)
+                s.sketch = r.sketch
+                s.solve = r
+                s.regionHapticPending = true
+                sketch = s
+            }
+            sketch?.offsetDistance = distance
+            sketch?.offsetEdit = SketchSession.OffsetEdit(before: before, sources: sources)
+            sketch?.selected = Set(result.curves.map { SketchItem.curve($0) })
+        }
+    }
+
+    /// Mirror: remembers the selected curves, then waits for the mirror line.
+    func startSketchMirror() {
+        guard let s = sketch else { return }
+        let ids = s.selected.compactMap { if case .curve(let c) = $0 { return c } else { return nil } }.sorted()
+        guard !ids.isEmpty else {
+            show(String(localized: "Select the shapes to mirror first, then tap Mirror."))
+            return
+        }
+        setSketchTool(.mirror)
+        sketch?.mirrorSource = ids
+        sketch?.selected = Set(ids.map { SketchItem.curve($0) })
+    }
+
+    private func mirrorTap(_ screen: CGPoint) {
+        guard let s = sketch else { return }
+        guard !s.mirrorSource.isEmpty else {
+            show(String(localized: "Select the shapes to mirror first, then tap Mirror."))
+            setSketchTool(.select)
+            return
+        }
+        guard let id = nearestCurve(screen), s.sketch.curve(id)?.kind == .line,
+              let (mirrored, created) = SketchEdit.mirror(s.sketch, curves: s.mirrorSource, across: id) else {
+            show(String(localized: "Tap a straight line to mirror across."))
+            return
+        }
+        changeSketch { $0 = mirrored }
+        setSketchTool(.select)
+        sketch?.selected = Set(created.map { SketchItem.curve($0) })
     }
 
     // MARK: - Dimensions
@@ -667,6 +923,8 @@ extension EditorModel {
             if let i = sk.constraints.firstIndex(where: { $0.id == id }) { sk.constraints[i].value = v }
         }
         sketch?.editingDimension = nil
+        // The next rounded corner uses the radius typed last.
+        if k.kind == .radius && s.tool == .fillet { sketch?.cornerRadius = v }
         return true
     }
 
@@ -692,6 +950,10 @@ extension EditorModel {
         }
         func constrain(_ k: ConstraintKind, _ refs: [Int]) { changeSketch { $0.addConstraint(k, refs) }; sketch?.selected = [] }
 
+        // Right after an offset: flip it to the other side.
+        if s.offsetEdit != nil {
+            add("offflip", "Other Side", "arrow.left.arrow.right", { self.flipOffsetSide() })
+        }
         if lines.count == 1 && curves.count == 1 && pts.isEmpty {
             let l = lines[0]
             add("h", "Horizontal", "arrow.left.and.right", { constrain(.horizontal, [l.id]) })
@@ -759,6 +1021,16 @@ extension EditorModel {
                 constrain(.symmetric, [pts[0], pts[1], lines[0].id])
             })
         }
+        if lines.count >= 3 && curves.count == lines.count && pts.isEmpty {
+            add("eqn", "Equal", "equal.square", {
+                self.changeSketch { sk in for l in lines.dropFirst() { sk.addConstraint(.equal, [lines[0].id, l.id]) } }
+                self.sketch?.selected = []
+            })
+        }
+        if pts.count == 1 && curves.isEmpty && SketchEdit.corner(s.sketch, at: pts[0]) != nil {
+            let p = pts[0]
+            add("rnd", "Round Corner", SketchTool.fillet.icon, { self.roundSketchCorner(p) })
+        }
         if pts.count == 1 && curves.isEmpty && pts[0] != Sketch.originID {
             let p = pts[0]
             let fixed = s.sketch.constraints.contains { $0.kind == .fix && $0.refs == [p] }
@@ -766,6 +1038,22 @@ extension EditorModel {
                 if fixed { self.changeSketch { $0.constraints.removeAll { $0.kind == .fix && $0.refs == [p] } } }
                 else { constrain(.fix, [p]) }
             })
+        }
+        if !curves.isEmpty && pts.isEmpty {
+            // Lock whole curves in place (every point of them).
+            let curvePoints = Set(curves.flatMap { $0.pointIDs }).subtracting([Sketch.originID])
+            let fixedPoints = Set(s.sketch.constraints.filter { $0.kind == .fix }.compactMap { $0.refs.first })
+            let allFixed = curvePoints.isSubset(of: fixedPoints)
+            add("fixc", allFixed ? "Unfix" : "Fix", allFixed ? "lock.open" : "lock", {
+                if allFixed {
+                    self.changeSketch { $0.constraints.removeAll { $0.kind == .fix && $0.refs.count == 1 && curvePoints.contains($0.refs[0]) } }
+                } else {
+                    self.changeSketch { sk in for p in curvePoints.subtracting(fixedPoints).sorted() { sk.addConstraint(.fix, [p]) } }
+                }
+                self.sketch?.selected = []
+            })
+            add("off", "Offset", "square.on.square.dashed", { self.offsetSketchSelection() })
+            add("mirr", "Mirror", SketchTool.mirror.icon, { self.startSketchMirror() })
         }
         if !curves.isEmpty {
             add("cons", "Construction", "line.3.horizontal.decrease", { self.toggleConstruction() })
@@ -897,6 +1185,13 @@ extension EditorModel {
         for c in s.clicks {
             scene.overlayPoints.append(GPUPointSprite(plane.world(c.position).float3, color: accent, size: 9))
         }
+        // Trim: the piece a tap would remove, in red.
+        if s.tool == .trim && s.trimPreview.count > 1 {
+            for k in 0..<(s.trimPreview.count - 1) {
+                scene.overlayLines.append(GPULineSegment(plane.world(s.trimPreview[k]).float3, plane.world(s.trimPreview[k + 1]).float3,
+                                                         color: red, width: 3.5))
+            }
+        }
     }
 
     // MARK: - Dimension labels (drawn by SwiftUI)
@@ -928,6 +1223,85 @@ extension EditorModel {
             out.append(DimensionLabel(id: k.id, text: text, position: p, conflict: conflicts.contains(k.id),
                                       editing: s.editingDimension == k.id, value: k.kind == .angle ? abs(v) * 180 / .pi : v,
                                       isAngle: k.kind == .angle))
+        }
+        return out
+    }
+
+    // MARK: - Constraint glyphs (small icons next to constrained geometry, drawn by SwiftUI)
+
+    struct ConstraintGlyph: Identifiable {
+        /// Unique per glyph: "<constraint id>-<n>" (some constraints show on two curves).
+        let id: String
+        let constraint: Int
+        /// SF Symbol name.
+        let icon: String
+        let position: CGPoint
+        let conflict: Bool
+        let selected: Bool
+    }
+
+    /// One glyph per geometric constraint (dimensions have their own labels). Tap one to select
+    /// the constraint; "Delete" in the context bar removes it.
+    var constraintGlyphs: [ConstraintGlyph] {
+        guard let s = sketch else { return [] }
+        let sk = s.sketch
+        let conflicts = s.solve?.conflicting ?? []
+        let off = sketchTolerance * 14
+        var out: [ConstraintGlyph] = []
+        // Glyphs at the same place are fanned out so they don't cover each other.
+        var used: [Vec2] = []
+        func place(_ k: SketchConstraint, _ n: Int, _ icon: String, _ at: Vec2) {
+            var p = at
+            while used.contains(where: { ($0 - p).length < off }) { p.x += off }
+            used.append(p)
+            guard let screen = screenPoint(p) else { return }
+            out.append(ConstraintGlyph(id: "\(k.id)-\(n)", constraint: k.id, icon: icon, position: screen,
+                                       conflict: conflicts.contains(k.id), selected: s.selected.contains(.constraint(k.id))))
+        }
+        /// A spot beside a curve: 35 % along a line (dimension labels sit at the middle), or on the circle.
+        func beside(_ id: Int) -> Vec2? {
+            guard let c = sk.curve(id) else { return nil }
+            switch c.kind {
+            case .line:
+                let (a, b) = sk.lineEnds(c)
+                return a + (b - a) * 0.35 - (b - a).normalized.perpendicular * off
+            case .circle, .arc:
+                let center = sk.position(c.a), r = sk.radius(of: c)
+                var ang = 2.3
+                if c.kind == .arc { let (a0, w) = sk.arcAngles(c); ang = a0 + w * 0.3 }
+                return center + Vec2(cos(ang), sin(ang)) * (r + off)
+            }
+        }
+        for k in sk.constraints where !k.kind.isDimension {
+            let r = k.refs
+            switch k.kind {
+            case .horizontal, .vertical:
+                let icon = k.kind == .horizontal ? "arrow.left.and.right" : "arrow.up.and.down"
+                if r.count == 1, let p = beside(r[0]) { place(k, 0, icon, p) }
+                else if r.count == 2 { place(k, 0, icon, (sk.position(r[0]) + sk.position(r[1])) / 2) }
+            case .parallel, .perpendicular, .equal, .tangent, .concentric:
+                let icon: String = switch k.kind {
+                case .parallel: "equal"
+                case .perpendicular: "angle"
+                case .equal: "equal.square"
+                case .tangent: "circle.and.line.horizontal"
+                default: "circle.circle"
+                }
+                for (n, id) in r.prefix(2).enumerated() { if let p = beside(id) { place(k, n, icon, p) } }
+            case .coincident, .pointOnCurve, .midpoint:
+                guard let first = r.first, sk.point(first) != nil else { continue }
+                let icon = k.kind == .midpoint ? "line.diagonal.arrow" : "smallcircle.filled.circle"
+                place(k, 0, icon, sk.position(first) + Vec2(off, off) * 0.7)
+            case .fix:
+                guard let first = r.first, sk.point(first) != nil else { continue }
+                place(k, 0, "lock.fill", sk.position(first) + Vec2(off, -off) * 0.7)
+            case .symmetric:
+                guard r.count == 3 else { continue }
+                place(k, 0, "arrow.left.and.right.righttriangle.left.righttriangle.right",
+                      (sk.position(r[0]) + sk.position(r[1])) / 2)
+            default:
+                continue
+            }
         }
         return out
     }

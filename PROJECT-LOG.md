@@ -171,3 +171,68 @@ User: "develop it to completion, perfect it… how do I make a profit? 10 CHF on
   - The featuring nomination still says 24 Nov 2026 and must be moved to the new date.
   - Still open in App Store Connect: check the other 12 locales (they were sent when the session expired), upload the screenshots, update the review notes, choose the latest builds.
   - The user submits to Apple themselves.
+
+## 2026-11-18/19: premium pass (Liquid Glass, fluidity, Pencil, features), "build, don't test yet"
+User: "what is still missing… /design, Apple design language, must feel premium, fluid, efficient, more features, Apple Pencil optimisation"; "don't test yet, just build everything".
+
+**Design (Liquid Glass)**
+- On iOS/macOS 26+ there is real glass (`glassEffect`, `GlassEffectContainer`, `.glass`/`.glassProminent` button styles). Before 26 the old material look stays, and with Reduce Transparency the panels are opaque. All of it goes through a few wrappers in `App/Views/Design/Glass.swift`, so it can be fixed in one place.
+- One motion vocabulary: `Theme.Motion` (snappy/smooth/bouncy plus panel/slide/push transitions; with Reduce Motion only short fades).
+- Rolling numbers; SF Symbol effects (bounce, replace); haptics via `.sensoryFeedback` or `Theme.Haptics`. Success haptics use UIKit because the view closes at the same moment.
+- Print sheet:
+  - hero at the top ("Ready to print" / "Check before printing")
+  - tiles for size, filament and time
+  - glass segmented control for the formats
+  - pinned Export button (⌘E)
+  - The print time is an estimate (≈ 24 g/h on fast printers, otherwise 14 g/h, + 5 min) and is labelled "≈".
+- Welcome is a hero with the logo cube, 3 benefits and a pinned button bar.
+- In the editor, the layout sits in a `FormwerkGlassGroup` so neighbouring glass blends. The inspector, toasts and view cube use the shared transitions.
+
+**Fluidity (render agent)**
+- Inertia after orbit and pan: exponential decay with a 0.35 s time constant; releases under 120 pt/s are ignored on purpose.
+- Soft mouse-wheel zoom over 0.18 s.
+- Camera transitions are eased and can be interrupted by a gesture.
+- Rendering:
+  - The view only renders when something changes; it pauses 0.25 s after the last change, and runs at 120 Hz while moving.
+  - iPhones too: `CADisableMinimumFrameDurationOnPhone`.
+  - Per-scene caches for edges, grid and overlays. This is the biggest CPU saving on A12.
+  - The depth buffer is memoryless.
+- New lighting: key, fill and rim plus sky/ground ambient. Lines are pixel-exact. The grid fades towards the horizon. Soft contact shadows under bodies.
+- Rejected: screen-space ambient occlusion (crease darkening). It would need an extra depth pass plus a full-screen pass with 4× MSAA, too expensive for A12.
+- BuildWorker: the newest request always wins; superseded builds stop before meshing.
+- **View cube** (`App/Views/Viewport/ViewCube.swift`): tap a face to go to that view, drag it to orbit, home button = fit everything. It sits bottom right (top left on iPhone) and is hidden while sketching.
+- The camera counter for the dimension labels now lives in its own `CameraTicker` object, so a camera frame only redraws the labels and not the whole editor.
+
+**Apple Pencil (pencil agent)**
+- Low latency:
+  - its own Pencil drag recognizer that starts after 4 pt and never delays touches
+  - coalesced touches for precision
+  - predicted touches for the preview only, never for geometry
+- **Tool palette at the Pencil tip:** squeeze on Pencil Pro (when the system setting is "contextual palette"). Double-tap opens it too, with the palette/colour setting. It shows the sketch tools plus Undo, Undo keeps it open, and it uses glass.
+- **Pencil Pro haptics on snapping** (`UICanvasFeedbackGenerator.alignmentOccurred`), at most every 40 ms. They can be turned off: "Pencil haptics".
+- Palm rejection (touches with `majorRadius` > 30 pt). A finger touching while the Pencil is down is ignored when "Only Apple Pencil draws" is on.
+- Hover preview only shows close to the screen (`zOffset` ≤ 0.5).
+- Scribble only while a dimension is being edited.
+- No fling after mouse drags or after a pinch zoom.
+
+**Features (features agent)**, new pure geometry in `Sources/Sketch/SketchEdit.swift` (testable):
+- **Trim:** tap removes the piece between intersections; hover shows it in red first.
+- **Offset:** a whole outline or chain at a distance, for walls. Outer corners become arcs. "Other side" flips it. Default 2 mm.
+- **Round corner:** tap a corner where two lines meet → tangent arc + radius dimension.
+- **Mirror:** curves across a line, with symmetry constraints.
+- Quick constraints were already there (horizontal/vertical/parallel/perpendicular/equal/tangent/coincident/fix). New: "Fix/Unfix" for whole curves, "Equal" for 3+ lines. Constraint symbols are shown next to the geometry; tap one to select it.
+- **Sketch with an offset from a face or origin plane** (`SketchFeature.planeOffset`).
+- **Extrude with a taper (draft):** `BRepOffsetAPI_DraftAngle` on the side walls. Not proven yet whether a positive angle narrows the part; the test `testDraftNarrowsTowardsTheTop` will show it.
+- **Hole "Thread for printing":** a size preset (tap drill or heat-set insert hole for M3–M8). Not a modelled thread.
+- Snap haptics fire only when the target changes (real move or hover, not predicted points). A success haptic fires when an edit creates a new closed area.
+- Backwards compatible: all new fields are optional; no enum cases renamed.
+- Skipped: variable fillet, thicken/rib, modelled threads, swipe-to-trim.
+
+**Build status:** Mac, iOS and the test target compile (`BUILD SUCCEEDED`, `TEST BUILD SUCCEEDED`). Fixed: the project's own `Shape` type (kernel) collided with SwiftUI's `Shape`, so it is now `SwiftUI.Shape`.
+**Not tested yet** (user: "build only"). Still to check:
+- the new unit tests (draft direction, round corner fully defined)
+- Liquid Glass on a real device
+- the Pencil palette and Pencil Pro haptics
+- inertia
+- the view cube
+- the insert diameter for M8 (9.7 mm, from memory)

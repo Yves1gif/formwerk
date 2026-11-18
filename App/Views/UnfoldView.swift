@@ -7,12 +7,14 @@ struct UnfoldView: View {
     let onContinue: () -> Void
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: Theme.Space.m) {
             Spacer()
             Image(systemName: "iphone.gen3")
                 .font(.system(size: 56, weight: .regular))
                 .foregroundStyle(Theme.blue)
-                .padding(.bottom, 8)
+                .frame(width: 104, height: 104)
+                .background(Theme.blue.opacity(0.10), in: Circle())
+                .padding(.bottom, Theme.Space.xs)
                 .accessibilityHidden(true)
             Text("Made for iPhone Duo")
                 .font(Theme.title(28, weight: .bold))
@@ -30,13 +32,21 @@ struct UnfoldView: View {
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
             Spacer()
-            Button("Continue", action: onContinue)
-                .buttonStyle(PillButtonStyle(prominent: true))
-                .padding(.bottom, 16)
+            Button(action: onContinue) {
+                Text("Continue")
+                    .font(.headline)
+                    .frame(maxWidth: 320, minHeight: 34)
+            }
+            .formwerkGlassButton(prominent: true)
+            .controlSize(.large)
+            .buttonBorderShape(.capsule)
+            .keyboardShortcut(.defaultAction)
+            .padding(.bottom, Theme.Space.m)
         }
+        .panelAppear(from: .center)
         // Comfortable line length on the unfolded or landscape screen.
         .frame(maxWidth: 440)
-        .padding(.horizontal, 32)
+        .padding(.horizontal, Theme.Space.xl)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(.background)
     }

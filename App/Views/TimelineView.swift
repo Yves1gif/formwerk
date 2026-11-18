@@ -2,65 +2,104 @@ import simd
 import SwiftUI
 
 /// Every step of the design at the bottom. Tap to edit, long-press/right-click for more.
+/// On iOS/macOS 26 every step is its own interactive glass chip and the chips blend in one
+/// glass container; before (and with Reduce Transparency) the chips sit on one glass bar and the
+/// "editing" highlight slides between them.
 struct TimelineView: View {
     @ObservedObject var model: EditorModel
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+    @Namespace private var highlight
 
     var body: some View {
         let features = model.design.features
         if !features.isEmpty {
-            ScrollViewReader { proxy in
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 4) {
+            strip(features)
+                .frame(maxWidth: 900)
+                .fixedSize(horizontal: false, vertical: true)
+                .animation(Theme.Motion.snappy, value: editingID)
+                .animation(Theme.Motion.smooth, value: features.count)
+                // A tap on the model (face, edge, body) ticks once on iPhone.
+                .formwerkFeedback(.selection, trigger: model.selection)
+                .panelAppear(from: .bottom)
+        }
+    }
+
+    @ViewBuilder
+    private func strip(_ features: [Feature]) -> some View {
+        if #available(iOS 26, macOS 26, *) {
+            if reduceTransparency {
+                scroller(features, glassChips: false).glassPanel(radius: Theme.Radius.bar)
+            } else {
+                scroller(features, glassChips: true)
+            }
+        } else {
+            scroller(features, glassChips: false).glassPanel(radius: Theme.Radius.bar)
+        }
+    }
+
+    private func scroller(_ features: [Feature], glassChips: Bool) -> some View {
+        ScrollViewReader { proxy in
+            ScrollView(.horizontal, showsIndicators: false) {
+                FormwerkGlassGroup(spacing: 6) {
+                    HStack(spacing: glassChips ? 6 : 4) {
                         ForEach(features) { f in
-                            chip(f).id(f.id)
+                            chip(f, glass: glassChips).id(f.id)
                         }
                     }
                     .padding(.horizontal, 6)
                 }
-                .onChange(of: features.count) { _, _ in
-                    if let last = features.last { withAnimation { proxy.scrollTo(last.id, anchor: .trailing) } }
-                }
             }
-            .frame(maxWidth: 900)
-            .fixedSize(horizontal: false, vertical: true)
-            .glassPanel(radius: Theme.Radius.bar)
+            .onChange(of: features.count) { _, _ in
+                if let last = features.last { withAnimation(Theme.Motion.smooth) { proxy.scrollTo(last.id, anchor: .trailing) } }
+            }
         }
     }
 
-    private func chip(_ f: Feature) -> some View {
+    /// The step being edited (tool or sketch open from the timeline).
+    private var editingID: UUID? {
+        if let id = model.tool?.editing { return id }
+        if let s = model.sketch, !s.isNew { return s.featureID }
+        return nil
+    }
+
+    private func chip(_ f: Feature, glass: Bool) -> some View {
         let status = model.output.statuses[f.id] ?? .ok
-        let editing = model.tool?.editing == f.id || (model.sketch?.featureID == f.id && model.sketch?.isNew == false)
+        let editing = editingID == f.id
         // Text stays primary for contrast; the status shows as a coloured badge and a tinted outline.
         let tint: Color? = switch status {
         case .error: Theme.problem
-        case .warning: .orange
+        case .warning: Theme.caution
         case .ok: nil
         }
         return Button { model.editFeature(f.id) } label: {
             HStack(spacing: 6) {
                 Image(systemName: icon(f)).font(.caption.weight(.semibold))
+                    .foregroundStyle(editing ? Theme.blue : Color.primary)
                     .accessibilityHidden(true)
                 Text(displayName(f)).font(.caption.weight(.medium)).lineLimit(1)
                 if case .error = status {
                     Image(systemName: "exclamationmark.circle.fill").font(.caption).foregroundStyle(Theme.problem)
+                        .transition(.scale.combined(with: .opacity))
                         .accessibilityHidden(true)
                 }
                 if case .warning = status {
-                    Image(systemName: "exclamationmark.triangle.fill").font(.caption).foregroundStyle(.orange)
+                    Image(systemName: "exclamationmark.triangle.fill").font(.caption).foregroundStyle(Theme.caution)
+                        .transition(.scale.combined(with: .opacity))
                         .accessibilityHidden(true)
                 }
             }
-            .padding(.horizontal, 12)
+            .padding(.horizontal, Theme.Space.s)
             .frame(minHeight: 36)
-            .background(editing ? Theme.blue.opacity(0.18) : Color.primary.opacity(0.06), in: Capsule())
+            .modifier(ChipBackground(glass: glass, editing: editing, namespace: highlight))
             .overlay(Capsule().strokeBorder(tint?.opacity(0.6) ?? (editing ? Theme.blue.opacity(0.6) : .clear), lineWidth: 1.5))
             .foregroundStyle(.primary)
             .opacity(f.suppressed ? 0.45 : 1)
+            .hoverHighlight(Capsule())
             // 36 pt capsule, 44 pt tap area.
             .padding(.vertical, 4)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PressScaleButtonStyle(scale: 0.95))
         .help(status.message.map { Text($0) } ?? Text(displayName(f)))
         .accessibilityLabel(Text(displayName(f)))
         .accessibilityValue(accessibilityStatus(f, status))
@@ -70,6 +109,30 @@ struct TimelineView: View {
             Button(f.suppressed ? "Turn On" : "Turn Off", systemImage: f.suppressed ? "eye" : "eye.slash") { model.toggleSuppressed(f.id) }
             Divider()
             Button("Delete", systemImage: "trash", role: .destructive) { model.deleteFeature(f.id) }
+        }
+    }
+
+    /// Glass chip (26+, tinted blue while editing) or a quiet capsule whose blue highlight slides
+    /// to the chip being edited.
+    private struct ChipBackground: ViewModifier {
+        let glass: Bool
+        let editing: Bool
+        let namespace: Namespace.ID
+
+        @ViewBuilder
+        func body(content: Content) -> some View {
+            if glass {
+                content.formwerkGlass(in: Capsule(), interactive: true, tint: editing ? Theme.blue.opacity(0.35) : nil)
+            } else {
+                content.background {
+                    if editing {
+                        Capsule().fill(Theme.blue.opacity(0.18))
+                            .matchedGeometryEffect(id: "editing", in: namespace)
+                    } else {
+                        Capsule().fill(Color.primary.opacity(0.06))
+                    }
+                }
+            }
         }
     }
 
@@ -143,13 +206,28 @@ enum FeatureNames {
 /// Dimension values in the sketch. Tap one to type a new value.
 struct DimensionLabels: View {
     @ObservedObject var model: EditorModel
+    @ObservedObject private var camera: CameraTicker
+
+    init(model: EditorModel) {
+        self.model = model
+        camera = model.cameraTicker
+    }
 
     var body: some View {
-        let _ = model.cameraTick
+        let _ = camera.tick
         ZStack {
             ForEach(model.dimensionLabels) { label in
                 DimensionLabelView(model: model, label: label)
                     .position(label.position)
+            }
+            // Small constraint symbols (parallel, tangent, …) next to the geometry; tap one to select it.
+            ForEach(model.constraintGlyphs) { g in
+                Image(systemName: g.icon).font(.system(size: 10, weight: .bold))
+                    .foregroundStyle(g.conflict ? Theme.problem : g.selected ? Theme.signal : Color.secondary)
+                    .frame(width: 18, height: 18).background(Circle().fill(.background.opacity(0.85)))
+                    .contentShape(Rectangle().inset(by: -6))
+                    .onTapGesture { model.sketch?.selected = [.constraint(g.constraint)] }
+                    .position(g.position)
             }
         }
     }
@@ -168,8 +246,8 @@ struct DimensionLabelView: View {
                 .multilineTextAlignment(.center)
                 .frame(width: 96)
                 .padding(.vertical, 5)
-                .background(RoundedRectangle(cornerRadius: 7).fill(.background))
-                .overlay(RoundedRectangle(cornerRadius: 7).stroke(Color.accentColor, lineWidth: 2))
+                .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(.background))
+                .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(Theme.blue, lineWidth: 2))
                 .focused($focused)
                 .onAppear {
                     text = Format.number(label.isAngle ? label.value : label.value / model.design.unit.millimetres, digits: 3)
@@ -183,9 +261,10 @@ struct DimensionLabelView: View {
             Text(label.text)
                 .font(Theme.number(13, weight: .semibold))
                 .padding(.horizontal, 8).padding(.vertical, 4)
-                .background(RoundedRectangle(cornerRadius: 6).fill(.background.opacity(0.9)))
-                .overlay(RoundedRectangle(cornerRadius: 6).stroke(label.conflict ? Color.red : Color.primary.opacity(0.25)))
-                .foregroundStyle(label.conflict ? Color.red : Color.primary)
+                .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(.background.opacity(0.9)))
+                .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(label.conflict ? Theme.problem : Color.primary.opacity(0.25)))
+                .foregroundStyle(label.conflict ? Theme.problem : Color.primary)
+                .contentShape(Rectangle())
                 .onTapGesture { model.sketch?.editingDimension = label.id }
                 .contextMenu {
                     Button("Delete", systemImage: "trash", role: .destructive) {
@@ -225,10 +304,15 @@ struct BodyList: View {
                         Text(style.name ?? String(localized: "Body \(i + 1)"))
                         Spacer()
                         Text(Format.number(b.props.volume / 1000, digits: 1) + " cm³").font(.caption).foregroundStyle(.secondary)
-                        Button { model.toggleHidden(b.id) } label: {
+                        Button {
+                            withAnimation(Theme.Motion.snappy) { model.toggleHidden(b.id) }
+                        } label: {
                             Image(systemName: style.hidden ? "eye.slash" : "eye")
+                                .contentTransition(.symbolEffect(.replace))
+                                .frame(minWidth: 28, minHeight: 28)
                         }
                         .buttonStyle(.borderless)
+                        .accessibilityLabel(Text(style.hidden ? "Show" : "Hide"))
                     }
                     .contentShape(Rectangle())
                     .onTapGesture { model.selection = [.body(b.id)] }

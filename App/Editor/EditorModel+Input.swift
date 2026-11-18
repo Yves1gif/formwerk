@@ -219,6 +219,20 @@ extension EditorModel: ViewportInput {
         dragState = nil
     }
 
+    /// Where the Pencil or finger will probably be a frame from now. Only the rubber band of a drawing drag follows
+    /// it, so the preview keeps up with the tip; geometry is only ever placed at real points (move/end).
+    func viewportDragPredicted(_ p: CGPoint) {
+        guard case .sketchDraw? = dragState, var s = sketch else { return }
+        let cursor = snap(p)
+        guard cursor != s.cursor else { return }
+        s.cursor = cursor
+        sketch = s
+    }
+
+    /// Apple Pencil handwriting (Scribble) may start over the 3D view only while a dimension is being typed;
+    /// otherwise strokes near a text field keep drawing instead of turning into text.
+    var viewportAcceptsHandwriting: Bool { sketch?.editingDimension != nil }
+
     // MARK: - Hover
 
     func viewportHover(_ p: CGPoint?) {
@@ -238,6 +252,7 @@ extension EditorModel: ViewportInput {
 
     func viewportPencil(_ action: PencilAction) {
         // Double-tap switches between drawing and selecting; squeeze goes back to the previous tool.
+        // ("Show palette" settings open the Pencil palette in the 3D view instead and never get here.)
         PencilDrawing.pencilSeen = true
         guard let s = sketch else { return }
         switch action {
@@ -306,6 +321,7 @@ extension EditorModel: ViewportInput {
     func viewportKey(_ key: ViewportKey) -> Bool {
         switch key {
         case .escape:
+            if PencilPaletteState.shared.isShown(for: self) { PencilPaletteState.shared.dismiss(); return true }
             if sketch != nil { cancelSketchAction() }
             else if tool != nil { cancelTool() }
             else { selection = [] }

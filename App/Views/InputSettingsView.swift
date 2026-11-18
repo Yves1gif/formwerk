@@ -3,6 +3,7 @@ import SwiftUI
 /// Apple Pencil, mouse and keyboard settings (Mac Settings window, iPad sheet).
 struct InputSettingsView: View {
     @AppStorage(PencilDrawing.key) private var pencil: PencilDrawing = .auto
+    @AppStorage(PencilHaptics.key) private var pencilHaptics = true
     @AppStorage(MousePreset.key) private var mouse: MousePreset = .formwerk
 
     var body: some View {
@@ -12,10 +13,15 @@ struct InputSettingsView: View {
                 Picker("Drawing in sketches", selection: $pencil) {
                     ForEach(PencilDrawing.allCases) { Text($0.title).tag($0) }
                 }
+                Toggle(PencilHaptics.title, isOn: $pencilHaptics)
             } header: {
                 Text("Apple Pencil")
             } footer: {
-                Text(pencil.detail)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(pencil.detail)
+                    Text(PencilHaptics.detail)
+                    Text(PencilHaptics.paletteHint)
+                }
             }
             #endif
 
@@ -64,9 +70,26 @@ struct InputSettingsView: View {
 
     private func keyRow(_ k: Text, _ action: LocalizedStringKey) -> some View {
         LabeledContent {
-            k.font(.body.monospaced().weight(.semibold))
+            KeyCap(label: k)
         } label: {
             Text(action)
         }
+    }
+}
+
+/// A key drawn like a key on the keyboard: monospaced, a soft fill and a hairline edge.
+private struct KeyCap: View {
+    let label: Text
+
+    var body: some View {
+        let shape = RoundedRectangle(cornerRadius: 6, style: .continuous)
+        label
+            .font(.callout.monospaced().weight(.semibold))
+            .padding(.horizontal, Theme.Space.xs)
+            .frame(minWidth: 30, minHeight: 26)
+            .background(Theme.quietFill, in: shape)
+            .overlay(shape.strokeBorder(Color.primary.opacity(0.15)))
+            .shadow(color: .black.opacity(0.08), radius: 0, y: 1)
+            .accessibilityElement(children: .combine)
     }
 }

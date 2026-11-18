@@ -13,6 +13,8 @@ struct Uniforms {
     float4x4 viewProj;
     float4 cameraPos;     // xyz
     float4 viewDir;       // xyz: direction the camera looks
+    float4 cameraRight;   // xyz: screen right in world space
+    float4 cameraUp;      // xyz: screen up in world space
     float4 clipPlane;     // xyz normal, w = offset; geometry with dot(n,p) > w is cut away
     float2 viewport;      // drawable size in pixels
     float clipOn;
@@ -72,14 +74,23 @@ fragment float4 mesh_fragment(MeshOut in [[stage_in]],
         return float4(b.color.rgb * 0.55, 1);
     }
     if (dot(n, toEye) < 0) n = -n;
-    // Soft studio light: key light from the camera's upper left, sky/ground ambient.
-    float3 key = normalize(toEye + float3(-0.3, 0.2, 0.6));
-    float diffuse = max(dot(n, key), 0.0);
+
+    // Studio rig fixed to the camera, so every side of a part reads the same way when you orbit:
+    // a warm key from the upper left, a weak cool fill from the right, a rim light from behind.
+    float3 F = u.viewDir.xyz, R = u.cameraRight.xyz, U = u.cameraUp.xyz;
+    float3 keyL  = normalize(-F * 0.75 + U * 0.55 - R * 0.40);
+    float3 fillL = normalize(-F * 0.70 - U * 0.15 + R * 0.70);
+    float3 rimL  = normalize( F * 0.60 + U * 0.70 + R * 0.20);
+    // Wrapped diffuse: soft terminator instead of a hard light/shadow line.
+    float key  = saturate((dot(n, keyL) + 0.25) / 1.25);
+    float fill = saturate((dot(n, fillL) + 0.40) / 1.40);
+    float rimD = saturate(dot(n, rimL));
+    // Hemispheric ambient in world space: sky above (Z up), warm floor bounce below.
     float hemi = 0.5 + 0.5 * n.z;
-    float3 ambient = mix(float3(0.30, 0.31, 0.34), float3(0.46, 0.47, 0.50), hemi);
-    float3 h = normalize(key + toEye);
-    float spec = pow(max(dot(n, h), 0.0), 40.0) * 0.14;
-    float rim = pow(1.0 - max(dot(n, toEye), 0.0), 3.0) * 0.12;
+    float3 ambient = mix(float3(0.27, 0.265, 0.26), float3(0.44, 0.455, 0.48), hemi);
+    float3 h = normalize(keyL + toEye);
+    float spec = pow(saturate(dot(n, h)), 48.0) * 0.16;
+    float fresnel = pow(1.0 - saturate(dot(n, toEye)), 4.0);
 
     float3 base = b.color.rgb;
     uchar state = faceState[in.face];
@@ -88,7 +99,8 @@ fragment float4 mesh_fragment(MeshOut in [[stage_in]],
     else if (state == 3) base = mix(base, float3(1.0, 0.55, 0.1), 0.75);   // overhang
     else if (state == 4) base = mix(base, float3(0.95, 0.15, 0.2), 0.75);  // thin wall
 
-    float3 c = base * (ambient + diffuse * 0.52) + spec + rim;
+    float3 light = ambient + key * float3(0.50, 0.49, 0.47) + fill * float3(0.12, 0.13, 0.15);
+    float3 c = base * light + spec + rimD * 0.07 + fresnel * 0.06;
     return float4(c, b.alpha);
 }
 
@@ -111,7 +123,8 @@ struct LineOut {
     float4 position [[position]];
     float4 color;
     uint pick [[flat]];
-    float across;
+    float across;         // pixels from the line's centre (signed)
+    float halfWidth [[flat]];  // half the line's width in pixels
     float3 world;
 };
 
@@ -136,28 +149,52 @@ vertex LineOut line_vertex(uint vid [[vertex_id]], uint iid [[instance_id]],
     float len = length(d);
     float2 dir = len > 1e-5 ? d / len : float2(1, 0);
     float2 perp = float2(-dir.y, dir.x);
-    float w = s.width * u.pixelScale * widthScale * 0.5 + 0.5;
+    // Whole-pixel widths stay crisp on Retina (1.1 pt → 2 px at 2×, 3 px at 3×); one extra pixel
+    // on each side holds the anti-aliased fringe.
+    float hw = max(round(s.width * u.pixelScale * widthScale), 1.0) * 0.5;
+    float w = hw + 1.0;
 
     // 0,1,2 / 2,1,3 → corners (end, side)
     uint corner = (vid == 0) ? 0 : (vid == 1 || vid == 4) ? 1 : (vid == 2 || vid == 3) ? 2 : 3;
     bool atB = corner == 1 || corner == 3;
     float side = (corner == 2 || corner == 3) ? 1.0 : -1.0;
     float4 c = atB ? cb : ca;
-    float2 sp = (atB ? sb : sa) + perp * side * w + dir * (atB ? w * 0.5 : -w * 0.5);
+    float2 sp = (atB ? sb : sa) + perp * side * w + dir * (atB ? hw : -hw);
     LineOut o;
     // Pull lines slightly towards the camera so they win against the faces they lie on.
     o.position = float4(sp / (u.viewport * 0.5) * c.w, c.z, c.w);
     o.color = float4(s.color);
     o.pick = s.pick;
-    o.across = side;
+    o.across = side * w;
+    o.halfWidth = hw;
     o.world = atB ? b : a;
     return o;
 }
 
 fragment float4 line_fragment(LineOut in [[stage_in]], constant Uniforms &u [[buffer(1)]]) {
     if (clipped(u, in.world - u.clipPlane.xyz * 0.01)) discard_fragment();
-    // Soft edge for anti-aliasing on top of MSAA.
-    float alpha = in.color.a * smoothstep(1.0, 0.6, abs(in.across));
+    // A one-pixel coverage ramp centred on the true edge: crisp, on top of MSAA.
+    float alpha = in.color.a * saturate(in.halfWidth + 0.5 - abs(in.across));
+    return float4(in.color.rgb, alpha);
+}
+
+struct GridUniforms {
+    float4 center;        // xyz on the plane, w = radius where the grid has faded out
+    float4 normal;        // xyz = plane normal
+};
+
+// Grid lines: like line_fragment, but fading out with distance and towards the horizon.
+fragment float4 grid_fragment(LineOut in [[stage_in]], constant Uniforms &u [[buffer(1)]],
+                              constant GridUniforms &g [[buffer(2)]]) {
+    if (clipped(u, in.world - u.clipPlane.xyz * 0.01)) discard_fragment();
+    float alpha = in.color.a * saturate(in.halfWidth + 0.5 - abs(in.across));
+    float r = g.center.w;
+    float d = distance(in.world, g.center.xyz);
+    alpha *= 1.0 - smoothstep(r * 0.3, r, d);
+    // Where the plane turns edge-on the lines crowd into moiré: let them go.
+    float3 toEye = normalize(u.cameraPos.xyz - in.world);
+    alpha *= smoothstep(0.03, 0.22, abs(dot(toEye, g.normal.xyz)));
+    if (alpha < 0.002) discard_fragment();
     return float4(in.color.rgb, alpha);
 }
 
@@ -204,6 +241,41 @@ fragment float4 point_fragment(PointOut in [[stage_in]]) {
     // White ring around a coloured dot reads well on any background.
     float3 c = d > 0.62 ? float3(1) : in.color.rgb;
     return float4(c, in.color.a * smoothstep(1.0, 0.85, d));
+}
+
+// MARK: - Contact shadows (one blurred rounded rectangle per body, on the ground)
+
+struct Shadow {
+    float4 rect;          // minX, minY, maxX, maxY
+    float4 params;        // ground z, blur, corner radius, darkness
+};
+
+struct ShadowOut {
+    float4 position [[position]];
+    float2 p;
+};
+
+vertex ShadowOut shadow_vertex(uint vid [[vertex_id]], constant Uniforms &u [[buffer(1)]],
+                               constant Shadow &s [[buffer(2)]]) {
+    float2 corners[6] = { float2(0,0), float2(1,0), float2(0,1), float2(0,1), float2(1,0), float2(1,1) };
+    float m = s.params.y;
+    float2 lo = s.rect.xy - m, hi = s.rect.zw + m;
+    float2 p = mix(lo, hi, corners[vid]);
+    ShadowOut o;
+    o.position = u.viewProj * float4(p, s.params.x, 1);
+    o.p = p;
+    return o;
+}
+
+fragment float4 shadow_fragment(ShadowOut in [[stage_in]], constant Shadow &s [[buffer(2)]]) {
+    float2 c = (s.rect.xy + s.rect.zw) * 0.5;
+    float2 hs = (s.rect.zw - s.rect.xy) * 0.5;   // ("half" is a type name in Metal)
+    float r = min(s.params.z, min(hs.x, hs.y));
+    float2 q = abs(in.p - c) - hs + r;
+    float d = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r;   // < 0 inside the footprint
+    float blur = max(s.params.y, 1e-3);
+    float a = s.params.w * (1.0 - smoothstep(-blur * 0.6, blur, d));
+    return float4(0, 0, 0, a);
 }
 
 // MARK: - Flat translucent triangles (sketch regions)

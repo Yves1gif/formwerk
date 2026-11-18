@@ -4,7 +4,14 @@ import SwiftUI
 
 enum SketchTool: String, CaseIterable, Identifiable {
     case select, line, rectangle, circle, arc, slot, polygon, point, dimension
+    /// Tools that change existing geometry (in the toolbar's "Modify" menu).
+    case trim, fillet, mirror
     var id: String { rawValue }
+
+    /// The tools shown as their own buttons in the sketch toolbar.
+    static let drawingTools: [SketchTool] = [.select, .line, .rectangle, .circle, .arc, .slot, .polygon, .point, .dimension]
+
+    var isModifyTool: Bool { self == .trim || self == .fillet || self == .mirror }
 
     var icon: String {
         switch self {
@@ -17,6 +24,9 @@ enum SketchTool: String, CaseIterable, Identifiable {
         case .polygon: "hexagon"
         case .point: "smallcircle.filled.circle"
         case .dimension: "ruler"
+        case .trim: "scissors"
+        case .fillet: "square.on.circle"
+        case .mirror: "arrow.left.and.right.righttriangle.left.righttriangle.right"
         }
     }
 
@@ -31,6 +41,9 @@ enum SketchTool: String, CaseIterable, Identifiable {
         case .polygon: "Polygon"
         case .point: "Point"
         case .dimension: "Dimension"
+        case .trim: "Trim"
+        case .fillet: "Round Corner"
+        case .mirror: "Mirror"
         }
     }
 
@@ -45,6 +58,8 @@ enum SketchTool: String, CaseIterable, Identifiable {
         case .polygon: "p"
         case .point: nil
         case .dimension: "d"
+        // No letters: outside a sketch a letter opens a new (empty) sketch with that tool.
+        case .trim, .fillet, .mirror: nil
         }
     }
 
@@ -60,6 +75,9 @@ enum SketchTool: String, CaseIterable, Identifiable {
         case .polygon: "Tap the centre, then a corner."
         case .point: "Tap to place a point."
         case .dimension: "Tap a line, circle or two points to add a dimension."
+        case .trim: "Tap the piece of a line or circle you want to remove."
+        case .fillet: "Tap a corner where two lines meet, then type the radius."
+        case .mirror: "Tap the line to mirror across."
         }
     }
 }
@@ -106,6 +124,28 @@ struct SketchSession {
     var modelSnaps: [Vec2] = []
     var cameraBefore: Camera?
     var polygonSides = 6
+
+    /// Extra distance of a face sketch from its face (origin planes keep it in `planeRef`).
+    var faceOffset: Double = 0
+    /// Offset tool: the distance for the next offset, and the last offset while it can still be changed.
+    var offsetDistance: Double = 2
+    var offsetEdit: OffsetEdit?
+    /// Round corner tool: the radius for the next corner (the last one typed).
+    var cornerRadius: Double = 2
+    /// Mirror tool: the curves to mirror once the user taps the mirror line.
+    var mirrorSource: [Int] = []
+    /// Trim tool: the piece under the pointer that a tap would remove (hover preview).
+    var trimPreview: [Vec2] = []
+    /// What the cursor snapped to last (for a haptic tick only when it changes).
+    var lastSnapTarget: String?
+    /// Set by edits; a new closed area after an edit gives a success haptic.
+    var regionHapticPending = false
+
+    /// The last offset, kept so typing another distance redoes it instead of adding a second copy.
+    struct OffsetEdit {
+        var before: Sketch
+        var sources: [Int]
+    }
 
     var isEmpty: Bool { sketch.curves.isEmpty }
 }

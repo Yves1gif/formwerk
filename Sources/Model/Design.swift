@@ -156,6 +156,9 @@ enum BodyMode: String, Codable, CaseIterable {
 struct SketchFeature: Codable, Equatable {
     var plane: PlaneRef
     var sketch: Sketch = Sketch()
+    /// Extra distance along the plane's normal, for sketches on a face ("sketch 5 mm above this face").
+    /// Origin planes keep their offset in `PlaneRef.origin`. Optional so older files decode unchanged.
+    var planeOffset: Double? = nil
 }
 
 struct ExtrudeFeature: Codable, Equatable {
@@ -166,6 +169,9 @@ struct ExtrudeFeature: Codable, Equatable {
     var symmetric: Bool = false
     var mode: BodyMode = .newBody
     var target: String? = nil
+    /// Taper of the side walls in radians (draft angle). Positive = narrower towards the far end.
+    /// nil or 0 = straight walls. Optional so older files decode unchanged.
+    var draftAngle: Double? = nil
 }
 
 struct RevolveFeature: Codable, Equatable {
@@ -248,6 +254,64 @@ struct HoleFeature: Codable, Equatable {
     var depth: Double = 0
     var headDiameter: Double = 6.5
     var headDepth: Double = 3.4
+    /// The printing thread preset the diameter came from (nil = none). Only remembers the choice;
+    /// `diameter` stays the size that gets built. Optional so older files decode unchanged.
+    var printThread: PrintThread? = nil
+
+    /// Sizes the hole for a thread preset: a tap-drill hole the screw cuts its thread into,
+    /// or the hole for a heat-set insert. nil clears the preset and keeps the diameter.
+    mutating func apply(_ thread: PrintThread?) {
+        printThread = thread
+        guard let thread, let size = PrintThread.size(thread.size) else { return }
+        kind = .simple
+        switch thread.kind {
+        case .screwCutsThread:
+            diameter = size.tapDrill
+        case .heatSetInsert:
+            diameter = size.insertHole
+            // A blind hole must be deeper than the insert.
+            if depth > 0 && depth < size.insertLength + 1 { depth = size.insertLength + 1 }
+        }
+    }
+}
+
+/// A thread for 3D printing, sized as a simple hole (no modelled thread).
+struct PrintThread: Codable, Equatable, Hashable {
+    enum Kind: String, Codable, CaseIterable {
+        /// The screw cuts its own thread into the plastic (tap-drill size).
+        case screwCutsThread = "tap"
+        /// A brass heat-set insert is melted in.
+        case heatSetInsert = "insert"
+    }
+
+    var size: String
+    var kind: Kind
+
+    struct Size {
+        let name: String
+        /// ISO metric coarse tap drill.
+        let tapDrill: Double
+        /// Hole for common heat-set inserts (CNC Kitchen / ruthex sizes).
+        let insertHole: Double
+        /// Length of the standard insert.
+        let insertLength: Double
+    }
+
+    static let sizes: [Size] = [
+        Size(name: "M3", tapDrill: 2.5, insertHole: 4.0, insertLength: 5.7),
+        Size(name: "M4", tapDrill: 3.3, insertHole: 5.6, insertLength: 8.1),
+        Size(name: "M5", tapDrill: 4.2, insertHole: 6.4, insertLength: 9.5),
+        Size(name: "M6", tapDrill: 5.0, insertHole: 8.0, insertLength: 12.7),
+        Size(name: "M8", tapDrill: 6.8, insertHole: 9.7, insertLength: 12.7),
+    ]
+
+    static func size(_ name: String) -> Size? { sizes.first { $0.name == name } }
+
+    /// The hole diameter this preset gives.
+    var diameter: Double? {
+        guard let s = PrintThread.size(size) else { return nil }
+        return kind == .screwCutsThread ? s.tapDrill : s.insertHole
+    }
 }
 
 struct PrimitiveFeature: Codable, Equatable {

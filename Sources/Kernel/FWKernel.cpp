@@ -13,6 +13,7 @@
 #include <TopoDS_Shape.hxx>
 #include <TopoDS_Face.hxx>
 #include <TopoDS_Edge.hxx>
+#include <TopoDS_Vertex.hxx>
 #include <TopoDS_Wire.hxx>
 #include <TopoDS_Compound.hxx>
 #include <TopExp.hxx>
@@ -40,6 +41,7 @@
 #include <BRepFilletAPI_MakeChamfer.hxx>
 #include <BRepOffsetAPI_MakeThickSolid.hxx>
 #include <BRepOffsetAPI_MakeOffsetShape.hxx>
+#include <BRepOffsetAPI_DraftAngle.hxx>
 #include <BRepGProp.hxx>
 #include <GProp_GProps.hxx>
 #include <Bnd_Box.hxx>
@@ -266,6 +268,47 @@ FWShape *fw_extrude(const FWShape *profile, FWVec3 direction, double distance, b
   BRepPrimAPI_MakePrism prism(base, dir * distance);
   if (!prism.IsDone()) { setError(err, "extrude failed"); return nullptr; }
   return wrap(fuseSolids(prism.Shape()));
+  FW_CATCH(nullptr)
+}
+
+FWShape *fw_extrude_draft(const FWShape *profile, FWVec3 direction, double distance, bool symmetric,
+                          double draftAngle, FWError *err) {
+  if (std::fabs(draftAngle) < 1e-4) return fw_extrude(profile, direction, distance, symmetric, err);
+  FW_TRY
+  if (std::fabs(distance) < 1e-6) { setError(err, "distance is zero"); return nullptr; }
+  if (std::fabs(draftAngle) > 1.4) { setError(err, "taper angle is too steep"); return nullptr; }
+  gp_Dir n = D(direction);
+  gp_Vec dir = V(direction).Normalized();
+  // The neutral plane is the sketch plane (through any vertex of the profile).
+  TopExp_Explorer vx(profile->shape, TopAbs_VERTEX);
+  if (!vx.More()) { setError(err, "empty profile"); return nullptr; }
+  gp_Pln neutral(BRep_Tool::Pnt(TopoDS::Vertex(vx.Current())), n);
+  TopoDS_Shape base = profile->shape;
+  if (symmetric) {
+    gp_Trsf t;
+    t.SetTranslation(dir * (-distance / 2));
+    base = BRepBuilderAPI_Transform(base, t, true).Shape();
+  }
+  BRepPrimAPI_MakePrism prism(base, dir * distance);
+  if (!prism.IsDone()) { setError(err, "extrude failed"); return nullptr; }
+  TopoDS_Shape solid = prism.Shape();
+  // The pull direction is the way the extrusion grows; positive angles narrow the body along it.
+  gp_Dir pull = distance > 0 ? n : n.Reversed();
+  BRepOffsetAPI_DraftAngle draft(solid);
+  int added = 0;
+  for (TopExp_Explorer fx(solid, TopAbs_FACE); fx.More(); fx.Next()) {
+    TopoDS_Face f = TopoDS::Face(fx.Current());
+    BRepAdaptor_Surface surf(f);
+    // Skip the caps (parallel to the sketch plane); taper every side wall.
+    if (surf.GetType() == GeomAbs_Plane && std::fabs(surf.Plane().Axis().Direction().Dot(n)) > 1 - 1e-7) continue;
+    draft.Add(f, pull, draftAngle, neutral);
+    if (!draft.AddDone()) { setError(err, "this shape can't be tapered this much"); return nullptr; }
+    added++;
+  }
+  if (added == 0) return wrap(fuseSolids(solid));
+  draft.Build();
+  if (!draft.IsDone()) { setError(err, "this shape can't be tapered this much"); return nullptr; }
+  return wrap(fuseSolids(draft.Shape()));
   FW_CATCH(nullptr)
 }
 

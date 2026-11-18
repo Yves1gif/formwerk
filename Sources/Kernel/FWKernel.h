@@ -86,6 +86,10 @@ FWShape *fw_make_compound(const FWShape *const *shapes, int32_t count);
 /// symmetric: half the distance each way.
 FWShape *fw_extrude(const FWShape *profile, FWVec3 direction, double distance, bool symmetric,
                     FWError *err);
+/// Like fw_extrude, but the side walls lean in by `draftAngle` (radians) towards the far end
+/// (negative = they lean out). The sketch plane is the neutral plane: the profile keeps its size there.
+FWShape *fw_extrude_draft(const FWShape *profile, FWVec3 direction, double distance, bool symmetric,
+                          double draftAngle, FWError *err);
 FWShape *fw_revolve(const FWShape *profile, FWVec3 axisOrigin, FWVec3 axisDir, double angle,
                     FWError *err);
 FWShape *fw_boolean(const FWShape *a, const FWShape *b, int32_t op, FWError *err);
