@@ -160,3 +160,14 @@ User: "develop it to completion, perfect it… how do I make a profit? 10 CHF on
   - iPad mini (same layout as the unfolded Duo) checked in ar/de/ja: Arabic is mirrored correctly, long German words wrap.
   - The "Made for iPhone Duo" note was checked on iPhone 17 Pro (de).
   - Not possible: unfolding the Duo simulator from the command line (no simctl command for it), so there is no screenshot of the inner screen itself.
+
+## 2026-11-18: final 1.1 builds, launch postponed
+- User: "build it finished", "don't use the simulator", "if you must, one that's already open". The simulators already running belonged to other projects (SkyRoutes, S171), so they were left alone. None was needed anyway: the iPad 13" and iPhone 6.9" screenshots were already done.
+- Screenshot mode now waits until the model is built (slow simulators had shown it too close or empty).
+  - iPad portrait is framed like landscape; only phones count as "narrow".
+  - The print shot moves closer on iPad/Mac so the pot shows next to the sheet.
+- Final 1.1 builds (iOS + Mac) uploaded to TestFlight. The App Store version still has the 28 October builds attached (functionally the same).
+- **Launch postponed to January/February 2027** (user's decision).
+  - The featuring nomination still says 24 Nov 2026 and must be moved to the new date.
+  - Still open in App Store Connect: check the other 12 locales (they were sent when the session expired), upload the screenshots, update the review notes, choose the latest builds.
+  - The user submits to Apple themselves.

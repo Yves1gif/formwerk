@@ -47,9 +47,9 @@ Bezahlte Apps werden seltener geladen, dafür bringt jeder Download Geld.
 
 ## 5. Marketing ohne Budget
 **Vor dem Launch (2–3 Wochen):**
-- **Featuring-Nominierung bei Apple einreichen** (App Store Connect → Featuring → Nominations). **Erledigt am 28.10.2026:** App-Start am 24.11.2026 für iPhone, iPad und Mac. Die Aufhänger sind iPhone Duo, Apple Pencil Pro, Open Source und 16 Sprachen.
+- **Featuring-Nominierung bei Apple einreichen** (App Store Connect → Featuring → Nominations). **Eingereicht am 28.10.2026** mit App-Start am 24.11.2026; **muss auf das neue Launch-Datum (Januar/Februar 2027) geändert werden.** Die Aufhänger sind iPhone Duo, Apple Pencil Pro, Open Source und 16 Sprachen.
 - **Öffentliche TestFlight-Beta** mit einem Link für r/BambuLab und r/3Dprinting. Gibt erste Fans und Fehlermeldungen.
-- **MakerWorld und Printables:** jede Woche 2–3 nützliche Teile hochladen, die mit Formwerk konstruiert wurden, mit dem Satz «Made with Formwerk, free on iPad». Das ist der wichtigste Kanal, weil die Zielgruppe dort jeden Tag sucht.
+- **MakerWorld und Printables:** jede Woche 2–3 nützliche Teile hochladen, die mit Formwerk konstruiert wurden, mit dem Satz «Made with Formwerk, on iPad, iPhone Duo and Mac». Das ist der wichtigste Kanal, weil die Zielgruppe dort jeden Tag sucht.
 - **Videos** (über den Marketing-Hub im Ordner `Marketing/`): 15–30-Sekunden-Clips im Hochformat, zum Beispiel «Handyständer in 60 Sekunden auf dem iPad konstruiert → gedruckt». Für TikTok, Reels und YouTube Shorts.
 
 **Launch-Woche:**
@@ -85,12 +85,15 @@ Mit Featuring sind 50'000+ möglich.
 | Wann | Was | Wer |
 |---|---|---|
 | erledigt / offen | Bezahl-Vertrag, Bank und Steuern sind aktiv. Small Business Program: Formular vorausgefüllt, das Häkchen setzt und sendet **du** | du |
-| erledigt | Preis 9.90 CHF in App Store Connect (Basisland Schweiz), Featuring-Nominierung abgeschickt (App-Start 24.11.) | ich |
-| Woche 1 | Build 1.1 mit iCloud, Pencil-, Maus- und Tastatur-Steuerung und iPhone Duo auf TestFlight. Dein Bruder testet am Wochenende. | ich |
-| Woche 1 | Featuring-Nominierung abschicken | du (der Entwurf ist fertig) |
-| Woche 2 | Öffentliche Beta, erste 10 MakerWorld-Modelle, 5 Videos | du + ich |
-| Woche 3 | Zur Prüfung einreichen («Senden an Apple») | **du** |
-| Launch-Woche | Product Hunt, HN, Reddit, Presse, Launch-Preis 5 CHF | du + ich |
+| erledigt | Preis 9.90 CHF in App Store Connect (Basisland Schweiz), Version 1.1 mit Builds, Texte EN/DE/ES/AR | ich |
+| erledigt (18.11.2026) | Finale Builds 1.1 für iPad/iPhone und Mac auf TestFlight | ich |
+| **Launch verschoben auf Januar/Februar 2027** (Entscheid 18.11.2026) | | |
+| November/Dezember | Dein Bruder und weitere Tester probieren TestFlight; Fehler beheben | du + ich |
+| Dezember | Nominierungsdatum in App Store Connect aufs neue Launch-Datum ändern (mind. 2–3 Wochen vorher, besser früher) | ich, mit deinem Okay |
+| Dezember/Januar | Restliche 12 Sprachen in App Store Connect prüfen, Screenshots hochladen, Prüfungsnotizen anpassen | ich |
+| Dezember/Januar | Öffentliche Beta, erste 10 MakerWorld-Modelle, 5 Videos (Marketing-Hub) | du + ich |
+| ca. 1–2 Wochen vor Launch | Zur Prüfung einreichen («Senden an Apple») | **du** |
+| Launch-Woche (Jan/Feb 2027) | Product Hunt, HN, Reddit, Presse, optionaler Launch-Preis | du + ich |
 | +1 Monat | Version 1.1: KI-Assistent | ich |
 
 ## 8. Risiken
